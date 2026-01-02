@@ -34,6 +34,11 @@ type (
 
 // 🎮 Глобальные переменные - наша "нейрохимия"
 var (
+	// 📅 Челлендж-переменные
+	challengeStart   = time.Date(2026, 1, 1, 0, 0, 0, 0, time.UTC)
+	currentDayNumber int
+	moduleTopic      = "Нейрокодинг и дофаминовая зависимость"
+
 	// 🧪 Нейротрансмиттеры программиста
 	dopamine = NeuroTransmitter{
 		Name:        "Дофамин",
@@ -77,13 +82,13 @@ var (
 	}
 
 	// 📊 Статистика нейрокодинга
-	totalSessions    = 1
-	totalLines       = 42
-	totalTests       = 8
-	totalBugs        = 3
-	streakDays       = 1
-	longestStreak    = 1
-	productivity     = 0.68
+	totalSessions = 1
+	totalLines    = 42
+	totalTests    = 8
+	totalBugs     = 3
+	streakDays    = 1
+	longestStreak = 1
+	productivity  = 0.68
 )
 
 func main() {
@@ -115,16 +120,42 @@ func main() {
 // 🚀 Начало сессии кодинга
 func startCodingSession() CodeSession {
 	now := time.Now()
+
+	// Вычисляем текущий день челленджа
+	currentDayNumber = calculateCurrentDay()
+
 	fmt.Println(strings.Repeat("🧠", 70))
-	fmt.Println("                    NEUROCODING-GO: ДОФАМИНОВОЕ ПРОГРАММИРОВАНИЕ")
-	fmt.Println("                       GO365 | День 1 | Сессия 1")
+	fmt.Printf("                    NEUROCODING-GO: ДОФАМИНОВОЕ ПРОГРАММИРОВАНИЕ\n")
+	fmt.Printf("                       GO365 | Go%d | Тема: %s\n", currentDayNumber, moduleTopic)
 	fmt.Println(strings.Repeat("🧠", 70))
-	fmt.Printf("\n🕒 Начало сессии: %s\n", now.Format("15:04:05"))
+
+	// 📊 Статистика прогресса
+	fmt.Printf("\n📅 День челленджа: Go%d (из 365)\n", currentDayNumber)
+	fmt.Printf("📊 Прогресс: %.1f%% завершено\n", float64(currentDayNumber)/365*100)
+	fmt.Printf("🕒 Начало сессии: %s\n", now.Format("15:04:05"))
 
 	return CodeSession{
-		StartTime:    now,
-		FocusLevel:   0.7,
+		StartTime:  now,
+		FocusLevel: 0.7,
 	}
+}
+
+// 📅 Вычисление текущего дня челленджа
+func calculateCurrentDay() int {
+	now := time.Now().UTC()
+	daysDiff := int(now.Sub(challengeStart).Hours() / 24)
+
+	// Если текущая дата раньше начала челленджа
+	if daysDiff < 0 {
+		return 1
+	}
+
+	// Если прошло больше 365 дней
+	if daysDiff > 364 {
+		return 365
+	}
+
+	return daysDiff + 1 // +1 потому что Go1 - это 1 января
 }
 
 // 📊 Нейро-дэшборд
@@ -145,6 +176,8 @@ func printNeuroDashboard() {
 	fmt.Println(strings.Repeat("─", 70))
 	fmt.Printf("📊 Продуктивность: %.0f%% | 🔥 Серия дней: %d | 📅 Всего сессий: %d\n",
 		productivity*100, streakDays, totalSessions)
+	fmt.Printf("🎯 День челленджа: Go%d | 🐹 Гофер-уровень: %.0f%%\n",
+		currentDayNumber, float64(currentDayNumber)/365*100)
 }
 
 // 💡 Принципы дофаминового программирования
@@ -172,13 +205,13 @@ func printDopaminePrinciples() {
 // 🎮 Симуляция сессии кодинга
 func simulateCodingSession(session *CodeSession) {
 	fmt.Println("\n" + strings.Repeat("═", 70))
-	fmt.Println("🎮 СИМУЛЯЦИЯ СЕССИИ КОДИНГА:")
+	fmt.Printf("🎮 СИМУЛЯЦИЯ СЕССИИ КОДИНГА (Go%d):\n", currentDayNumber)
 	fmt.Println(strings.Repeat("─", 70))
 
-	actions := []struct{
-		Action string
+	actions := []struct {
+		Action         string
 		DopamineChange float64
-		Result string
+		Result         string
 	}{
 		{"$ go run main.go", 0.05, "✅ Компиляция успешна! Программа запущена."},
 		{"Добавление новой функции", 0.08, "✨ Функция calculate() реализована."},
@@ -191,16 +224,15 @@ func simulateCodingSession(session *CodeSession) {
 		{"$ git push origin main", 0.08, "🚀 Код отправлен в удалённый репозиторий."},
 	}
 
-	session.LinesWritten = 42
-	session.TestsPassed = 8
+	session.LinesWritten = 42 + currentDayNumber*3 // Больше строк в последующие дни
+	session.TestsPassed = 8 + currentDayNumber
 	session.BugsFixed = 3
 
 	for i, action := range actions {
 		fmt.Printf("\n🎯 Шаг %d: %s\n", i+1, action.Action)
-		time.Sleep(100 * time.Millisecond)
 		fmt.Printf("   %s\n", action.Result)
 		fmt.Printf("   💥 Дофамин +%.2f\n", action.DopamineChange)
-		dopamine.Level = min(dopamine.Level + action.DopamineChange, 1.0)
+		dopamine.Level = min(dopamine.Level+action.DopamineChange, 1.0)
 	}
 
 	session.EndTime = time.Now()
@@ -214,13 +246,13 @@ func checkDopamineRewards() {
 
 	newRewards := 0
 	for i := range dopamineRewards {
-		// Симулируем разблокировку некоторых наград
-		if !dopamineRewards[i].Unlocked && dopamine.Level > dopamineRewards[i].DopamineHit*0.8 {
+		// Автоматически разблокируем награды в зависимости от дня челленджа
+		if !dopamineRewards[i].Unlocked && currentDayNumber >= getDayForReward(dopamineRewards[i].Name) {
 			dopamineRewards[i].Unlocked = true
 			newRewards++
 			fmt.Printf("   🎉 РАЗБЛОКИРОВАНО: %s\n", dopamineRewards[i].Name)
 			fmt.Printf("      %s (+%.1f дофамина)\n", dopamineRewards[i].Description, dopamineRewards[i].DopamineHit)
-			dopamine.Level = min(dopamine.Level + dopamineRewards[i].DopamineHit/10, 1.0)
+			dopamine.Level = min(dopamine.Level+dopamineRewards[i].DopamineHit/10, 1.0)
 		}
 	}
 
@@ -232,24 +264,46 @@ func checkDopamineRewards() {
 		countUnlockedRewards(), len(dopamineRewards))
 }
 
+// 📅 Получение дня для разблокировки награды
+func getDayForReward(rewardName string) int {
+	rewardDays := map[string]int{
+		"FirstCompile":      1,
+		"TenLines":          2,
+		"TestGreen":         5,
+		"FeatureComplete":   10,
+		"PRMerged":          15,
+		"BugSlayer":         20,
+		"RefactorKing":      30,
+		"OpenSourceContrib": 60,
+		"GoJobOffer":        365,
+	}
+
+	if day, exists := rewardDays[rewardName]; exists {
+		return day
+	}
+	return 999 // Очень далеко
+}
+
 // 📈 Обновление нейрохимии после сессии
 func updateNeurochemistry(session CodeSession) {
 	fmt.Println("\n" + strings.Repeat("═", 70))
 	fmt.Println("🧪 ОБНОВЛЕНИЕ НЕЙРОХИМИИ ПОСЛЕ СЕССИИ:")
 	fmt.Println(strings.Repeat("─", 70))
 
-	// Дофамин: за завершение сессии
-	serotonin.Level = min(serotonin.Level + 0.1, 1.0) // Удовлетворение
-	endorphins.Level = min(endorphins.Level + 0.05, 1.0) // Преодоление трудностей
-	oxytocin.Level = min(oxytocin.Level + 0.03, 1.0) // Чувство принадлежности к коммьюнити
+	// Нейрохимия улучшается с каждым днём челленджа
+	dailyImprovement := float64(currentDayNumber) * 0.005
 
-	fmt.Println("   💥 Дофамин:  Мотивация для следующей сессии (+0.15)")
-	fmt.Println("   😌 Серотонин: Удовлетворение от выполненной работы (+0.10)")
-	fmt.Println("   🛡️ Эндорфины: Устойчивость к сложностям (+0.05)")
-	fmt.Println("   🤝 Окситоцин: Связь с Go-коммьюнити (+0.03)")
+	serotonin.Level = min(serotonin.Level+0.1+dailyImprovement, 1.0)
+	endorphins.Level = min(endorphins.Level+0.05+dailyImprovement, 1.0)
+	oxytocin.Level = min(oxytocin.Level+0.03+dailyImprovement, 1.0)
 
-	productivity = 0.72
-	streakDays++
+	fmt.Printf("   💥 Дофамин:  Мотивация для следующей сессии (+0.15)\n")
+	fmt.Printf("   😌 Серотонин: Удовлетворение от выполненной работы (+%.2f)\n", 0.1+dailyImprovement)
+	fmt.Printf("   🛡️ Эндорфины: Устойчивость к сложностям (+%.2f)\n", 0.05+dailyImprovement)
+	fmt.Printf("   🤝 Окситоцин: Связь с Go-коммьюнити (+%.2f)\n", 0.03+dailyImprovement)
+
+	productivity = 0.68 + (float64(currentDayNumber) * 0.001)
+	streakDays = currentDayNumber
 	if streakDays > longestStreak {
 		longestStreak = streakDays
 	}
@@ -260,7 +314,7 @@ func printSessionSummary(session CodeSession) {
 	duration := session.EndTime.Sub(session.StartTime)
 
 	fmt.Println("\n" + strings.Repeat("═", 70))
-	fmt.Println("📊 ИТОГИ СЕССИИ NEUROCODING-GO:")
+	fmt.Printf("📊 ИТОГИ СЕССИИ NEUROCODING-GO (Go%d):\n", currentDayNumber)
 	fmt.Println(strings.Repeat("─", 70))
 
 	fmt.Printf("   🕒 Длительность: %v\n", duration.Round(time.Minute))
@@ -274,25 +328,32 @@ func printSessionSummary(session CodeSession) {
 	efficiency := float64(session.LinesWritten) / duration.Minutes()
 	fmt.Printf("   ⚡ Эффективность: %.1f строк/минуту\n", efficiency)
 
-	if efficiency > 2.0 {
-		fmt.Println("\n   🚀 ОТЛИЧНЫЙ РЕЗУЛЬТАТ! Ты в потоке!")
+	// Оценка сессии в зависимости от дня
+	if currentDayNumber <= 7 {
+		fmt.Println("\n   🐣 НАЧАЛО ПУТИ! Первая неделя Go365 - ты уже молодец!")
+	} else if currentDayNumber <= 30 {
+		fmt.Println("\n   🚀 ОТЛИЧНЫЙ СТАРТ! Месяц обучения - фундамент заложен!")
+	} else if currentDayNumber <= 100 {
+		fmt.Println("\n   💪 СИЛЬНЫЙ ПРОГРЕСС! 100 дней Go - ты на верном пути!")
 	} else {
-		fmt.Println("\n   👍 ХОРОШАЯ РАБОТА! Каждая строка кода приближает к цели.")
+		fmt.Println("\n   🏆 ВПЕЧАТЛЯЮЩЕ! Продолжаешь движение к цели!")
 	}
 }
 
 // 🔮 Мотивация на завтра
 func printTomorrowMotivation() {
+	nextDay := currentDayNumber + 1
+
 	fmt.Println("\n" + strings.Repeat("═", 70))
-	fmt.Println("🔮 НЕЙРОПРОГНОЗ НА ЗАВТРАШНЮЮ СЕССИЮ:")
+	fmt.Printf("🔮 НЕЙРОПРОГНОЗ НА ЗАВТРА (Go%d):\n", nextDay)
 	fmt.Println(strings.Repeat("─", 70))
 
 	motivations := []string{
-		"🧠 Твой мозг уже начал формировать нейронные пути для Go!",
+		fmt.Sprintf("🧠 Go%d: Твой мозг формирует нейронные пути для Go!", nextDay),
 		"💪 Завтра будет легче: нейропластичность работает на тебя.",
-		"🎯 Микро-цель на завтра: написать 50 строк кода или пройти 10 тестов.",
-		"🏆 Следующая дофаминовая награда: 'TenLines' (напиши ещё 8 строк).",
-		"📈 Если продолжишь стрик 7 дней: +0.3 к базовому уровню дофамина!",
+		fmt.Sprintf("🎯 Микро-цель на Go%d: написать %d строк кода", nextDay, 40+nextDay*2),
+		fmt.Sprintf("🏆 Следующая дофаминовая награда: 'TenLines' (напиши ещё %d строк).", 8),
+		fmt.Sprintf("📈 Если продолжишь стрик %d дней: +%.1f к базовому уровню дофамина!", nextDay+1, float64(nextDay)*0.005),
 		"",
 		"💡 ПОМНИ: Каждый раз когда ты пишешь `go run`, а не открываешь игру,",
 		"         ты перепрограммируешь свою систему вознаграждения.",
@@ -300,8 +361,8 @@ func printTomorrowMotivation() {
 		"🎮 Раньше: Игры → Дофамин → Зависимость от игр",
 		"🚀 Теперь: Go-код → Дофамин → Зависимость от роста",
 		"",
-		"🐹 Гофер гордится тобой! Каждая горутина в твоём коде —",
-		"   это новый нейрон в твоём мозге.",
+		fmt.Sprintf("🐹 Гофер гордится тобой! Go%d - это %d новых нейронов для Go!",
+			nextDay, nextDay*1000),
 	}
 
 	for _, m := range motivations {
@@ -309,7 +370,7 @@ func printTomorrowMotivation() {
 	}
 
 	fmt.Println("\n" + strings.Repeat("🧠", 70))
-	fmt.Println("                 ДО ЗАВТРА! ПУСТЬ ДОФАМИН РАБОТАЕТ НА ТЕБЯ!")
+	fmt.Printf("                 Go%d ЖДЁТ! ПУСТЬ ДОФАМИН РАБОТАЕТ НА ТЕБЯ!\n", nextDay)
 	fmt.Println(strings.Repeat("🧠", 70))
 }
 
