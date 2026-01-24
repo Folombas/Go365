@@ -1,0 +1,3 @@
+module temptation-simulator
+
+go 1.25.6
