@@ -1,0 +1,18 @@
+{
+  "date": "2026-01-24",
+  "day": 24,
+  "player": {
+    "achievements": [
+      "Уровень Go 6 достигнут",
+      "Уровень Go 9 достигнут",
+      "Уровень Go 10 достигнут"
+    ],
+    "dopamine": 650,
+    "focus": 30,
+    "go_knowledge": 100,
+    "money": 500,
+    "name": "Гоша",
+    "temptations_resisted": 0,
+    "willpower": 40
+  }
+}
