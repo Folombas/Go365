@@ -4,24 +4,25 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
-	"path/filepath"
+
+	//"path/filepath"
 	"time"
 )
 
 const (
-	saveFile    = "gosha_snow_memoirs.json"
-	startDate   = "2026-01-18"
-	currentDay  = 42
+	saveFile   = "gosha_snow_memoirs.json"
+	startDate  = "2026-01-18"
+	currentDay = 42
 )
 
 // Memoir хранит данные о сопротивлении CapCut
 type Memoir struct {
-	StartDate      string   `json:"start_date"`
-	LastCheck      string   `json:"last_check"`
-	DaysCount      int      `json:"days_count"`
-	Achievements   []string `json:"achievements"`
-	XP             int      `json:"xp"`
-	Slogan         string   `json:"slogan"`
+	StartDate    string   `json:"start_date"`
+	LastCheck    string   `json:"last_check"`
+	DaysCount    int      `json:"days_count"`
+	Achievements []string `json:"achievements"`
+	XP           int      `json:"xp"`
+	Slogan       string   `json:"slogan"`
 }
 
 var achievementsMap = map[int]string{
