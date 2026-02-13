@@ -8,19 +8,19 @@ import (
 )
 
 const (
-	dataFile   = "wet_boots_resistance.json"
-	startDate  = "2026-01-18"
+	dataFile  = "wet_boots_resistance.json"
+	startDate = "2026-01-18"
 )
 
 // ResistanceData хранит данные о сопротивлении CapCut
 type ResistanceData struct {
-	StartDate      string   `json:"start_date"`
-	LastCheck      string   `json:"last_check"`
-	DaysCount      int      `json:"days_count"`
-	Achievements   []string `json:"achievements"`
-	XP             int      `json:"xp"`
-	Slogan         string   `json:"slogan"`
-	WetBootsLevel  int      `json:"wet_boots_level"` // уровень промокания (метафора сложности)
+	StartDate     string   `json:"start_date"`
+	LastCheck     string   `json:"last_check"`
+	DaysCount     int      `json:"days_count"`
+	Achievements  []string `json:"achievements"`
+	XP            int      `json:"xp"`
+	Slogan        string   `json:"slogan"`
+	WetBootsLevel int      `json:"wet_boots_level"` // уровень промокания (метафора сложности)
 }
 
 var achievementsMap = map[int]string{
@@ -35,8 +35,10 @@ var achievementsMap = map[int]string{
 
 func main() {
 	fmt.Println("🌧️🌧️🌧️🌧️🌧️🌧️🌧️🌧️🌧️🌧️🌧️🌧️🌧️🌧️🌧️🌧️🌧️🌧️🌧️🌧️")
-	fmt.Println("         ДЕНЬ 43: ПЯТНИЦА 13, МОКРЫЕ БОТИНКИ         ")
+	fmt.Println("         ДЕНЬ 43: ПЯТНИЦА 13, МОКРЫЕ НУБУКОВЫЕ БОТИНКИ         ")
 	fmt.Println("🌧️🌧️🌧️🌧️🌧️🌧️🌧️🌧️🌧️🌧️🌧️🌧️🌧️🌧️🌧️🌧️🌧️🌧️🌧️🌧️")
+	fmt.Println()
+	fmt.Println("📚 Тема дня: Standard Library: I/O & File Handling: Encoding / JSON")
 	fmt.Println()
 
 	data := loadOrCreateData()
@@ -171,7 +173,7 @@ func printFriday13Legend(data *ResistanceData) {
 }
 
 func printStats(data *ResistanceData) {
-	fmt.Println("📊 СТАТИСТИКА СОПРОТИВЛЕНИЯ")
+	fmt.Println("📊 СТАТИСТИКА ОБУЧЕНИЯ")
 	fmt.Println("───────────────────────────")
 	fmt.Printf("🗓️  Старт: %s\n", data.StartDate)
 	fmt.Printf("📅 Сегодня: %s\n", data.LastCheck)
@@ -230,4 +232,3 @@ func printDisclaimer() {
 	fmt.Println("Ботинки можно просушить, а знания — никогда.")
 	fmt.Println("===================")
 }
-
