@@ -38,7 +38,7 @@ func main() {
 	fmt.Println("         ДЕНЬ 43: ПЯТНИЦА 13, МОКРЫЕ НУБУКОВЫЕ БОТИНКИ         ")
 	fmt.Println("🌧️🌧️🌧️🌧️🌧️🌧️🌧️🌧️🌧️🌧️🌧️🌧️🌧️🌧️🌧️🌧️🌧️🌧️🌧️🌧️")
 	fmt.Println()
-	fmt.Println("📚 Тема дня: Standard Library: I/O & File Handling: Encoding / JSON")
+	fmt.Println("📚 Тема дня: Standard Library: I/O & File Handling: I/O & File Handling")
 	fmt.Println()
 
 	data := loadOrCreateData()
