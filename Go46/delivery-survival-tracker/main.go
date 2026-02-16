@@ -10,9 +10,9 @@ import (
 )
 
 const (
-	dataFile     = "delivery_stats.txt"
-	capcutStart  = "2026-01-18"
-	separator    = "|"
+	dataFile    = "delivery_stats.txt"
+	capcutStart = "2026-01-18"
+	separator   = "|"
 )
 
 type Stats struct {
@@ -170,4 +170,3 @@ func printDisclaimer() {
 	fmt.Println("Гречка с огурцом — реальна, остальное — художественный вымысел.")
 	fmt.Println("===================")
 }
-
