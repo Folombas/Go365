@@ -1,0 +1,40 @@
+🔧 OPENCODE: ВСЕ СПОСОБЫ УСТАНОВКИ
+
+╔══════════════════════════════════════════════════════════════════╗
+║ 1. YOLO-скрипт (самый простой, для Linux/macOS/WSL)             ║
+║    curl -fsSL https://opencode.ai/install | bash                 ║
+║    или с выбором директории:                                     ║
+║    OPENCODE_INSTALL_DIR=/my/path curl ... | bash                 ║
+╠══════════════════════════════════════════════════════════════════╣
+║ 2. Пакетные менеджеры (Windows, macOS, Linux)                    ║
+║    • Windows: scoop install opencode  или  choco install opencode║
+║    • macOS:   brew install opencode                              ║
+║    • Linux:   brew install opencode  или  paru -S opencode-bin   ║
+║    • npm:     npm i -g opencode-ai@latest                        ║
+║    • mise:    mise use -g opencode                               ║
+╠══════════════════════════════════════════════════════════════════╣
+║ 3. Десктоп-приложение (бета, для обычных пользователей)          ║
+║    Скачать с opencode.ai/download или через менеджеры:           ║
+║    • macOS: brew install --cask opencode-desktop                 ║
+║    • Windows: scoop install extras/opencode-desktop              ║
+║    • Linux: .deb, .rpm, AppImage на сайте                        ║
+╠══════════════════════════════════════════════════════════════════╣
+║ 4. Установка через Go (для Go-разработчиков)                     ║
+║    go install github.com/opencode-ai/opencode@latest             ║
+║    (требуется настроенный GOPATH и $PATH)                        ║
+╠══════════════════════════════════════════════════════════════════╣
+║ 5. Для пользователей Windows (без WSL)                           ║
+║    • Использовать десктоп-версию (рекомендуется)                 ║
+║    • Установить WSL2 и внутри Ubuntu ставить через YOLO-скрипт   ║
+║    • Использовать Docker-образ                                    ║
+║    ВНИМАНИЕ: нативная версия для Windows в разработке [citation:6]║
+╠══════════════════════════════════════════════════════════════════╣
+║ 6. Архивные/форкнутые версии                                     ║
+║    Проект развивается, некоторые старые репозитории архивированы.║
+║    Всегда используйте актуальные ссылки с opencode.ai [citation:1][citation:2]║
+╚══════════════════════════════════════════════════════════════════╝
+
+После установки не забудь:
+1. Настроить API-ключи (openai, anthropic, gemini и др.) [citation:4]
+2. Зайти в папку с проектом и запустить opencode
+3. Опционально: создать конфиг ~/.opencode.json
