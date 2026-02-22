@@ -1,0 +1,15 @@
+🛠️ УСТАНОВКА OPENCODE В WSL UBUNTU 24 ЧЕРЕЗ GO INSTALL
+
+1. Открой терминал WSL (Ubuntu 24).
+2. Убедись, что Go установлен: go version.
+3. Выполни команду:
+   go install github.com/opencode-ai/opencode@latest
+4. После установки бинарник появится в ~/go/bin. Добавь его в PATH, если ещё не:
+   echo 'export PATH=$PATH:$HOME/go/bin' >> ~/.bashrc
+   source ~/.bashrc
+5. Проверь версию: opencode --version
+6. (Опционально) Установи вспомогательные утилиты для лучшей работы:
+   sudo apt install ripgrep fzf -y
+7. Теперь можно настраивать конфиг и запускать opencode.
+
+Поздравляю! Ты установил AI-агента, написанного на Go.
