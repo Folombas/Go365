@@ -27,3 +27,6 @@
    ```bash
    git clone https://github.com/Folombas/go365.git
    cd go365/Go54/client_info
+
+
+ ### Пример работы\n\n![Пример определения данных пользователя](assets/example.png)  
