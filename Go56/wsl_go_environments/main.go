@@ -2,18 +2,13 @@ package main
 
 import (
 	"encoding/json"
+	"flag"
 	"fmt"
 	"os"
 	"text/tabwriter"
 )
 
-func main() {
-	fmt.Println("================================================")
-	fmt.Println("   WSL Go Environments Analyzer (консоль)      ")
-	fmt.Println("================================================")
-	fmt.Println("Привет! Сегодня мы исследуем все доступные дистрибутивы WSL")
-	fmt.Println("и выберем лучшие для Go-разработки и ИИ-помощников.\n")
-
+func runConsole() {
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', tabwriter.TabIndent)
 	fmt.Fprintln(w, "Дистрибутив (Friendly Name)\tИмя для установки\tПоддержка Go\tИИ-совместимость\tКоманда установки\tEXP")
 	fmt.Fprintln(w, "---------------------------\t-----------------\t------------\t-----------------\t-----------------\t---")
@@ -38,4 +33,15 @@ func main() {
 	fmt.Println("\n💡 Совет: Для Go-разработки лучше всего подходят Ubuntu, Debian, Fedora, AlmaLinux.")
 	fmt.Println("   Если любишь всё свежее — Arch или Tumbleweed. Для максимальной стабильности — Debian или SLE.")
 	fmt.Println("👟 И помни: как правильная обувь защищает от влаги, так и правильный дистрибутив защитит от багов!")
+}
+
+func main() {
+	webMode := flag.Bool("web", false, "запустить веб-интерфейс")
+	flag.Parse()
+
+	if *webMode {
+		StartWebServer()
+	} else {
+		runConsole()
+	}
 }
