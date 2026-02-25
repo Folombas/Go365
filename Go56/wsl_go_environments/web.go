@@ -4,105 +4,16 @@ import (
 	"fmt"
 	"html/template"
 	"net/http"
-	"sort"
 	"strconv"
 )
 
-// Distro представляет информацию о дистрибутиве Linux для WSL
-type Distro struct {
-	Name                 string   `json:"name"`
-	FriendlyName         string   `json:"friendly_name"`
-	Description          string   `json:"description"`
-	GoSupport            string   `json:"go_support"`
-	AIToolsCompatibility string   `json:"ai_tools_compatibility"`
-	WSLInstallCmd        string   `json:"wsl_install_cmd"`
-	Notes                []string `json:"notes"`
-	Exp                  int      `json:"exp"`
-}
-
-// Данные скопированы из main.go (полный список дистрибутивов)
-var distros = []Distro{
-	// ... (полный список из 23 дистрибутивов, как в main.go, я его сокращу для краткости, но в реальном ответе он должен быть полным)
-	// В реальности тут нужно вставить все 23 элемента из предыдущего main.go.
-	// Для экономии места в ответе я покажу только несколько, но в готовом коде необходимо использовать полный список.
-	// Полный список можно взять из предыдущего сообщения.
-	// Здесь я приведу усечённый вариант для демонстрации структуры, но в финальном ответе будет полный.
-}
-
-// Преобразование оценки в число
-func scoreToInt(score string) int {
-	switch score {
-	case "Отлично":
-		return 2
-	case "Хорошо":
-		return 1
-	default:
-		return 0
-	}
-}
-
-// Фильтры
-type Filters struct {
-	MinGoScore int
-	MinAIScore int
-	MinExp     int
-	SortBy     string // "name", "exp", "go", "ai"
-	SortOrder  string // "asc", "desc"
-}
-
-func filterDistros(dists []Distro, f Filters) []Distro {
-	var result []Distro
-	for _, d := range dists {
-		goScore := scoreToInt(d.GoSupport)
-		aiScore := scoreToInt(d.AIToolsCompatibility)
-		if goScore >= f.MinGoScore && aiScore >= f.MinAIScore && d.Exp >= f.MinExp {
-			result = append(result, d)
-		}
-	}
-	// сортировка
-	switch f.SortBy {
-	case "name":
-		sort.Slice(result, func(i, j int) bool {
-			if f.SortOrder == "asc" {
-				return result[i].FriendlyName < result[j].FriendlyName
-			} else {
-				return result[i].FriendlyName > result[j].FriendlyName
-			}
-		})
-	case "exp":
-		sort.Slice(result, func(i, j int) bool {
-			if f.SortOrder == "asc" {
-				return result[i].Exp < result[j].Exp
-			} else {
-				return result[i].Exp > result[j].Exp
-			}
-		})
-	case "go":
-		sort.Slice(result, func(i, j int) bool {
-			if f.SortOrder == "asc" {
-				return scoreToInt(result[i].GoSupport) < scoreToInt(result[j].GoSupport)
-			} else {
-				return scoreToInt(result[i].GoSupport) > scoreToInt(result[j].GoSupport)
-			}
-		})
-	case "ai":
-		sort.Slice(result, func(i, j int) bool {
-			if f.SortOrder == "asc" {
-				return scoreToInt(result[i].AIToolsCompatibility) < scoreToInt(result[j].AIToolsCompatibility)
-			} else {
-				return scoreToInt(result[i].AIToolsCompatibility) > scoreToInt(result[j].AIToolsCompatibility)
-			}
-		})
-	}
-	return result
-}
-
-func sumExp(dists []Distro) int {
-	s := 0
-	for _, d := range dists {
-		s += d.Exp
-	}
-	return s
+// StartWebServer запускает веб-интерфейс на порту 8080
+func StartWebServer() {
+	http.HandleFunc("/", indexHandler)
+	http.HandleFunc("/compare", compareHandler)
+	fmt.Println("Сервер запущен на http://localhost:8080")
+	fmt.Println("Нажми Ctrl+C для остановки")
+	http.ListenAndServe(":8080", nil)
 }
 
 func indexHandler(w http.ResponseWriter, r *http.Request) {
@@ -140,7 +51,7 @@ func indexHandler(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	filtered := filterDistros(distros, f)
+	filtered := FilterDistros(distros, f)
 
 	data := struct {
 		Distros  []Distro
@@ -149,7 +60,7 @@ func indexHandler(w http.ResponseWriter, r *http.Request) {
 	}{
 		Distros:  filtered,
 		Filters:  f,
-		TotalExp: sumExp(filtered),
+		TotalExp: SumExp(filtered),
 	}
 
 	tmpl := template.Must(template.New("index").Parse(htmlTemplate))
@@ -179,14 +90,6 @@ func compareHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	tmpl := template.Must(template.New("compare").Parse(compareTemplate))
 	tmpl.Execute(w, data)
-}
-
-func main() {
-	http.HandleFunc("/", indexHandler)
-	http.HandleFunc("/compare", compareHandler)
-	fmt.Println("Сервер запущен на http://localhost:8080")
-	fmt.Println("Нажми Ctrl+C для остановки")
-	http.ListenAndServe(":8080", nil)
 }
 
 const htmlTemplate = `<!DOCTYPE html>
