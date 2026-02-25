@@ -9,6 +9,12 @@ import (
 )
 
 func runConsole() {
+	fmt.Println("================================================")
+	fmt.Println("   WSL Go Environments Analyzer (консоль)      ")
+	fmt.Println("================================================")
+	fmt.Println("Привет! Сегодня мы исследуем все доступные дистрибутивы WSL")
+	fmt.Println("и выберем лучшие для Go-разработки и ИИ-помощников.")
+
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', tabwriter.TabIndent)
 	fmt.Fprintln(w, "Дистрибутив (Friendly Name)\tИмя для установки\tПоддержка Go\tИИ-совместимость\tКоманда установки\tEXP")
 	fmt.Fprintln(w, "---------------------------\t-----------------\t------------\t-----------------\t-----------------\t---")
@@ -40,7 +46,7 @@ func main() {
 	flag.Parse()
 
 	if *webMode {
-		StartWebServer()
+		StartWebServer() // обрати внимание: большая буква S
 	} else {
 		runConsole()
 	}
