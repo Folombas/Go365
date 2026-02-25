@@ -21,3 +21,10 @@ git clone https://github.com/Folombas/go365.git
 cd go365/Go56/wsl_go_environments
 go mod tidy
 go run main.go
+
+## Веб-интерфейс
+
+В дополнение к консольной версии доступна веб-версия с удобным графическим интерфейсом. Для её запуска выполните:
+
+```bash
+go run web.go
