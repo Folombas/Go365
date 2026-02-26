@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Статистика MoodMeter</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            margin: 0;
+            padding: 20px;
+            color: #333;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        h1 {
+            text-align: center;
+            color: #4A90E2;
+        }
+        .nav {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .nav a {
+            margin: 0 10px;
+            color: #4A90E2;
+            text-decoration: none;
+        }
+        .stats {
+            display: flex;
+            justify-content: space-around;
+            flex-wrap: wrap;
+        }
+        .stat-card {
+            background: #f0f0f0;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 10px;
+            min-width: 150px;
+            text-align: center;
+        }
+        .exp {
+            font-size: 24px;
+            color: #4A90E2;
+        }
+        .achievements {
+            background: #e8f5e9;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th, td {
+            padding: 10px;
+            border-bottom: 1px solid #ddd;
+            text-align: left;
+        }
+        th {
+            background: #4A90E2;
+            color: white;
+        }
+        .mood-great { color: #2ecc71; }
+        .mood-good { color: #27ae60; }
+        .mood-neutral { color: #f39c12; }
+        .mood-bad { color: #e67e22; }
+        .mood-awful { color: #e74c3c; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📊 Статистика MoodMeter</h1>
+        <div class="nav">
+            <a href="/">Главная</a> | <a href="/stats">Статистика</a>
+        </div>
+
+        <div class="stats">
+            <div class="stat-card">
+                <h3>Всего EXP</h3>
+                <div class="exp">{{.ExpTotal}}</div>
+            </div>
+            <div class="stat-card">
+                <h3>Всего записей</h3>
+                <div>{{len .Recent}}</div>
+            </div>
+        </div>
+
+        {{if .Achievements}}
+        <div class="achievements">
+            <h3>🏆 Достижения</h3>
+            <ul>
+                {{range .Achievements}}
+                <li>{{.}}</li>
+                {{end}}
+            </ul>
+        </div>
+        {{end}}
+
+        <h2>Распределение настроений</h2>
+        <table>
+            <tr>
+                <th>Настроение</th>
+                <th>Количество</th>
+            </tr>
+            {{range .Stats}}
+            <tr>
+                <td>
+                    {{if eq .Mood "great"}}😄 Отличное
+                    {{else if eq .Mood "good"}}🙂 Хорошее
+                    {{else if eq .Mood "neutral"}}😐 Нейтральное
+                    {{else if eq .Mood "bad"}}😞 Плохое
+                    {{else if eq .Mood "awful"}}😭 Ужасное
+                    {{else}}{{.Mood}}
+                    {{end}}
+                </td>
+                <td>{{.Count}}</td>
+            </tr>
+            {{end}}
+        </table>
+
+        <h2>Последние записи</h2>
+        <table>
+            <tr>
+                <th>Время</th>
+                <th>Настроение</th>
+                <th>Заметка</th>
+                <th>EXP</th>
+            </tr>
+            {{range .Recent}}
+            <tr>
+                <td>{{.Timestamp.Format "02 Jan 15:04"}}</td>
+                <td class="mood-{{.Mood}}">
+                    {{if eq .Mood "great"}}Отличное
+                    {{else if eq .Mood "good"}}Хорошее
+                    {{else if eq .Mood "neutral"}}Нейтральное
+                    {{else if eq .Mood "bad"}}Плохое
+                    {{else if eq .Mood "awful"}}Ужасное
+                    {{else}}{{.Mood}}
+                    {{end}}
+                </td>
+                <td>{{.Note}}</td>
+                <td>{{.Exp}}</td>
+            </tr>
+            {{end}}
+        </table>
+    </div>
+</body>
+</html>
