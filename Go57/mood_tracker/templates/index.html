@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>MoodMeter - Дневник эмоций</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            margin: 0;
+            padding: 20px;
+            color: #333;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        h1 {
+            text-align: center;
+            color: #4A90E2;
+        }
+        .mood-form {
+            margin-top: 20px;
+        }
+        label {
+            display: block;
+            margin: 10px 0 5px;
+        }
+        select, textarea {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        textarea {
+            height: 80px;
+        }
+        button {
+            background: #4A90E2;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-top: 15px;
+            width: 100%;
+        }
+        button:hover {
+            background: #357ABD;
+        }
+        .nav {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .nav a {
+            margin: 0 10px;
+            color: #4A90E2;
+            text-decoration: none;
+        }
+        .quote {
+            font-style: italic;
+            color: #666;
+            text-align: center;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>😊 MoodMeter</h1>
+        <div class="nav">
+            <a href="/">Главная</a> | <a href="/stats">Статистика</a>
+        </div>
+        <div class="quote">
+            "Даже в самый хмурый день можно найти повод для улыбки. Например, пирожки от мамы."
+        </div>
+        <div class="mood-form">
+            <form method="post">
+                <label for="mood">Как твоё настроение сейчас?</label>
+                <select name="mood" id="mood" required>
+                    <option value="great">Отличное 😄</option>
+                    <option value="good">Хорошее 🙂</option>
+                    <option value="neutral">Нейтральное 😐</option>
+                    <option value="bad">Плохое 😞</option>
+                    <option value="awful">Ужасное 😭</option>
+                </select>
+
+                <label for="note">Что повлияло? (прогулка, пирожки, работа...)</label>
+                <textarea name="note" id="note" placeholder="Напиши пару слов..."></textarea>
+
+                <button type="submit">Записать (+10 EXP)</button>
+            </form>
+        </div>
+        <p style="text-align:center; margin-top:20px;">Каждая запись приносит 10 EXP. Копи EXP и получай ачивки!</p>
+    </div>
+</body>
+</html>
