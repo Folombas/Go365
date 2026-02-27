@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{.Post.Title}} - Gopher's Journey</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <div class="container">
+        <div class="glass fade-in">
+            <a href="/" class="btn">На главную</a>
+            <a href="/posts" class="btn">Все записи</a>
+        </div>
+
+        <div class="glass fade-in">
+            <h1>{{.Post.Title}}</h1>
+            <div class="post-meta">{{.Post.CreatedAt.Format "02 Jan 2006 15:04"}} | +{{.Post.Exp}} EXP</div>
+            <div class="post-content" style="white-space: pre-wrap; line-height:1.8;">{{.Post.Content}}</div>
+        </div>
+    </div>
+    <script src="/static/script.js"></script>
+</body>
+</html>
