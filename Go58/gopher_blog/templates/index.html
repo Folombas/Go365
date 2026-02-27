@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gopher's Journey – блог Go‑разработчика</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <div class="container">
+
+        <!-- Шапка -->
+        <div class="glass">
+            <h1>🐹 Gopher's Journey</h1>
+            <p>День 58 челленджа Go365. Учу Go, пишу блог, зарабатываю EXP.</p>
+        </div>
+
+        <!-- Статистика игрока -->
+        <div class="glass">
+            <h2>📊 Уровень {{.User.Level}}</h2>
+            <p>EXP: {{.User.Exp}} / {{.User.NextLevelExp}}</p>
+            <div class="exp-bar">
+                <div class="exp-fill" id="expFill" data-width="{{.ProgressWidth}}"></div>
+            </div>
+            {{if .User.Achievements}}
+            <div>
+                <h3>🏆 Достижения:</h3>
+                {{range .User.Achievements}}
+                <span class="badge">{{.}}</span>
+                {{end}}
+            </div>
+            {{end}}
+        </div>
+
+        <!-- Последние записи -->
+        <div class="glass">
+            <h2>📝 Последние записи</h2>
+            {{range .Posts}}
+            <div class="card">
+                <h3><a href="/post/{{.ID}}">{{.Title}}</a></h3>
+                <div class="meta">{{.CreatedAt.Format "02 Jan 2006 15:04"}} · +{{.Exp}} EXP</div>
+                <p>{{.Excerpt}}</p>
+                <a href="/post/{{.ID}}" class="btn">Читать далее</a>
+            </div>
+            {{else}}
+            <p>Пока нет записей. Будь первым!</p>
+            {{end}}
+            <div style="margin-top: 20px; display: flex; gap: 10px;">
+                <a href="/posts" class="btn">Все записи</a>
+                <a href="#new-post" class="btn btn-primary">➕ Новая запись</a>
+            </div>
+        </div>
+
+        <!-- Форма добавления поста -->
+        <div class="glass" id="new-post">
+            <h2>✍️ Новая запись</h2>
+            <form method="post" action="/new">
+                <div class="form-group">
+                    <label for="title">Заголовок</label>
+                    <input type="text" id="title" name="title" required>
+                </div>
+                <div class="form-group">
+                    <label for="content">Содержание</label>
+                    <textarea id="content" name="content" rows="8" required></textarea>
+                </div>
+                <button type="submit" class="btn btn-primary">Опубликовать (+10 EXP)</button>
+            </form>
+        </div>
+
+    </div>
+
+    <script>
+        // Устанавливаем ширину прогресс-бара из data-атрибута
+        (function() {
+            var fill = document.getElementById('expFill');
+            if (fill) {
+                fill.style.width = fill.dataset.width + '%';
+            }
+        })();
+    </script>
+    <script src="/static/script.js"></script>
+</body>
+</html>
