@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Все записи - Gopher's Journey</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <div class="container">
+        <div class="glass fade-in">
+            <h1>📚 Все записи блога</h1>
+            <p><a href="/">На главную</a></p>
+        </div>
+
+        <div class="glass fade-in">
+            {{range .Posts}}
+            <div class="post-card">
+                <h3 class="post-title"><a href="/post/{{.ID}}">{{.Title}}</a></h3>
+                <div class="post-meta">{{.CreatedAt.Format "02 Jan 2006 15:04"}} | +{{.Exp}} EXP</div>
+                <div class="post-excerpt">{{slice .Content 0 200}}...</div>
+                <a href="/post/{{.ID}}" class="btn" style="margin-top:10px;">Читать далее</a>
+            </div>
+            {{else}}
+            <p>Пока нет записей. Будь первым!</p>
+            {{end}}
+        </div>
+    </div>
+    <script src="/static/script.js"></script>
+</body>
+</html>
