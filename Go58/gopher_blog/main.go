@@ -21,6 +21,7 @@ type Post struct {
 	Content   string    `json:"content"`
 	CreatedAt time.Time `json:"created_at"`
 	Exp       int       `json:"exp"`
+	Excerpt   string    `json:"-"` // не сохраняется, используется в шаблонах
 }
 
 // User — данные пользователя (Гоши) для геймификации
@@ -41,6 +42,15 @@ var (
 
 const expPerPost = 10
 
+// truncate обрезает текст до указанной длины, добавляя многоточие
+func truncate(s string, max int) string {
+	runes := []rune(s)
+	if len(runes) <= max {
+		return s
+	}
+	return string(runes[:max]) + "..."
+}
+
 // Загрузка данных из файлов
 func loadData() {
 	// Загрузка постов
@@ -49,6 +59,10 @@ func loadData() {
 		if len(posts) > 0 {
 			nextID = posts[len(posts)-1].ID + 1
 		}
+	}
+	// Заполняем Excerpt для всех постов
+	for i := range posts {
+		posts[i].Excerpt = truncate(posts[i].Content, 200)
 	}
 
 	// Загрузка пользователя
@@ -67,8 +81,16 @@ func loadData() {
 
 // Сохранение данных
 func savePosts() {
+	// Перед сохранением убираем поле Excerpt (чтобы не сохранять)
+	for i := range posts {
+		posts[i].Excerpt = ""
+	}
 	data, _ := json.MarshalIndent(posts, "", "  ")
 	ioutil.WriteFile(postsFile, data, 0644)
+	// Восстанавливаем Excerpt после сохранения
+	for i := range posts {
+		posts[i].Excerpt = truncate(posts[i].Content, 200)
+	}
 }
 
 func saveUser() {
@@ -123,12 +145,18 @@ func indexHandler(w http.ResponseWriter, r *http.Request) {
 		recentPosts = posts[len(posts)-5:]
 	}
 
+	// Вычисляем процент прогресса
+	progress := float64(user.Exp) / float64(user.NextLevelExp) * 100
+	progressWidth := fmt.Sprintf("%.0f", progress)
+
 	data := struct {
-		Posts []Post
-		User  User
+		Posts         []Post
+		User          User
+		ProgressWidth string
 	}{
-		Posts: recentPosts,
-		User:  user,
+		Posts:         recentPosts,
+		User:          user,
+		ProgressWidth: progressWidth,
 	}
 
 	tmpl := template.Must(template.ParseFiles("templates/index.html"))
@@ -143,6 +171,10 @@ func postsHandler(w http.ResponseWriter, r *http.Request) {
 	sort.Slice(sorted, func(i, j int) bool {
 		return sorted[i].CreatedAt.After(sorted[j].CreatedAt)
 	})
+	// Обновляем Excerpt для сортированных копий
+	for i := range sorted {
+		sorted[i].Excerpt = truncate(sorted[i].Content, 200)
+	}
 
 	data := struct {
 		Posts []Post
@@ -158,7 +190,6 @@ func postsHandler(w http.ResponseWriter, r *http.Request) {
 
 // Обработчик отдельного поста
 func postHandler(w http.ResponseWriter, r *http.Request) {
-	// URL вида /post/123
 	pathParts := strings.Split(r.URL.Path, "/")
 	if len(pathParts) < 3 {
 		http.NotFound(w, r)
@@ -215,6 +246,7 @@ func newPostHandler(w http.ResponseWriter, r *http.Request) {
 		Content:   content,
 		CreatedAt: time.Now(),
 		Exp:       expPerPost,
+		Excerpt:   truncate(content, 200),
 	}
 	nextID++
 	posts = append(posts, post)
