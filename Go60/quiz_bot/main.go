@@ -9,12 +9,11 @@ import (
 	"os"
 	"os/signal"
 	"sort"
-
-	//"strconv"
 	"syscall"
 	"time"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
+	"github.com/joho/godotenv"
 )
 
 // Question представляет вопрос викторины
@@ -44,11 +43,27 @@ var (
 	dataFile      = "users.json" // файл для сохранения статистики
 )
 
-const (
-	BotToken = "ВАШ_ТОКЕН_БОТА" // замените на реальный токен
-)
-
 func main() {
+	// Загружаем переменные из .env файла
+	err := godotenv.Load()
+	if err != nil {
+		log.Println("Файл .env не найден, используем системные переменные окружения")
+	}
+
+	// Читаем токен из переменной окружения
+	botToken := os.Getenv("TELEGRAM_BOT_TOKEN")
+	if botToken == "" {
+		log.Fatal("Не задан TELEGRAM_BOT_TOKEN в .env или окружении")
+	}
+
+	// Создаём бота с токеном из переменной
+	bot, err = tgbotapi.NewBotAPI(botToken)
+	if err != nil {
+		log.Fatal("Ошибка создания бота:", err)
+	}
+	bot.Debug = false
+	log.Printf("Бот авторизован: %s", bot.Self.UserName)
+
 	// Загружаем вопросы
 	if err := loadQuestions(); err != nil {
 		log.Fatal("Ошибка загрузки вопросов:", err)
@@ -57,15 +72,6 @@ func main() {
 
 	// Загружаем сохранённые данные пользователей
 	loadUserData()
-
-	// Подключаемся к Telegram
-	var err error
-	bot, err = tgbotapi.NewBotAPI(BotToken)
-	if err != nil {
-		log.Fatal("Ошибка создания бота:", err)
-	}
-	bot.Debug = false
-	log.Printf("Бот авторизован: %s", bot.Self.UserName)
 
 	// Канал для graceful shutdown
 	stop := make(chan os.Signal, 1)
@@ -262,7 +268,6 @@ func sendRandomQuestion(chatID int64, user *UserData) {
 	}
 
 	// Выбираем случайный вопрос
-	// Для разнообразия можно избегать повторов, но пока просто random
 	q := questions[time.Now().UnixNano()%int64(len(questions))]
 
 	// Формируем текст вопроса
@@ -271,7 +276,6 @@ func sendRandomQuestion(chatID int64, user *UserData) {
 	// Создаём инлайн-клавиатуру с вариантами
 	var rows [][]tgbotapi.InlineKeyboardButton
 	for i, opt := range q.Options {
-		// Добавляем кнопку с callback_data "answer_<id>_<индекс>"
 		callbackData := fmt.Sprintf("answer_%d_%d", q.ID, i)
 		btn := tgbotapi.NewInlineKeyboardButtonData(opt, callbackData)
 		rows = append(rows, tgbotapi.NewInlineKeyboardRow(btn))
@@ -299,7 +303,6 @@ func sendLeaderboard(chatID int64) {
 		return list[i].User.TotalEXP > list[j].User.TotalEXP
 	})
 
-	// Берём топ-10
 	limit := 10
 	if len(list) < limit {
 		limit = len(list)
@@ -308,8 +311,6 @@ func sendLeaderboard(chatID int64) {
 
 	text := "🏆 *Топ игроков*\n\n"
 	for i, item := range top {
-		// Здесь можно получить username, но пока используем chatID
-		// Для username нужно хранить отдельно или запрашивать через API
 		text += fmt.Sprintf("%d. ID %d – Уровень %d, EXP %d\n", i+1, item.ChatID, item.User.Level, item.User.TotalEXP)
 	}
 	if len(top) == 0 {
