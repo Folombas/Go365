@@ -4,38 +4,248 @@
     "question": "Какой тип данных используется для хранения целых чисел в Go?",
     "options": ["int", "float", "string", "bool"],
     "correct": 0,
-    "exp": 10
+    "exp": 5
   },
   {
     "id": 2,
-    "question": "Какой пакет нужен для вывода в консоль?",
+    "question": "Как объявить переменную с короткой записью?",
+    "options": [":=", "=", "var", "let"],
+    "correct": 0,
+    "exp": 5
+  },
+  {
+    "id": 3,
+    "question": "Какой пакет необходим для вывода в консоль?",
     "options": ["fmt", "log", "os", "io"],
+    "correct": 0,
+    "exp": 5
+  },
+  {
+    "id": 4,
+    "question": "Что такое goroutine?",
+    "options": ["Легковесный поток", "Функция обратного вызова", "Структура данных", "Тип данных"],
     "correct": 0,
     "exp": 10
   },
   {
-    "id": 3,
-    "question": "Как называется механизм конкурентности в Go?",
-    "options": ["goroutines", "threads", "async", "promises"],
+    "id": 5,
+    "question": "Как создать канал для передачи целых чисел?",
+    "options": ["make(chan int)", "new(chan int)", "chan int{}", "Channel<int>"],
+    "correct": 0,
+    "exp": 10
+  },
+  {
+    "id": 6,
+    "question": "Что вернёт выражение `len(make([]int, 5, 10))`?",
+    "options": ["5", "10", "0", "ошибка компиляции"],
     "correct": 0,
     "exp": 15
   },
   {
-    "id": 4,
-    "question": "Что такое интерфейс в Go?",
+    "id": 7,
+    "question": "Какой тип данных является ссылочным в Go?",
+    "options": ["slice", "array", "int", "struct"],
+    "correct": 0,
+    "exp": 10
+  },
+  {
+    "id": 8,
+    "question": "Как объявить интерфейс с одним методом `Read(p []byte) (n int, err error)`?",
     "options": [
-      "Набор методов",
-      "Абстрактный класс",
-      "Структура данных",
-      "Тип-значение"
+      "type Reader interface { Read(p []byte) (n int, err error) }",
+      "interface Reader { Read(p []byte) (int, error) }",
+      "Reader := interface { Read(p []byte) (int, error) }",
+      "type Reader interface { Read(p []byte) (int, error) }"
     ],
     "correct": 0,
     "exp": 15
   },
   {
-    "id": 5,
-    "question": "Какой символ используется для объявления короткой переменной?",
-    "options": [":=", "=", "var", "let"],
+    "id": 9,
+    "question": "Какой тип по умолчанию для целочисленного литерала?",
+    "options": ["int", "int32", "int64", "float64"],
+    "correct": 0,
+    "exp": 10
+  },
+  {
+    "id": 10,
+    "question": "Что такое `defer` в Go?",
+    "options": [
+      "Откладывает выполнение функции до возврата из окружающей функции",
+      "Выполняет функцию асинхронно",
+      "Завершает программу",
+      "Создаёт новую горутину"
+    ],
+    "correct": 0,
+    "exp": 10
+  },
+  {
+    "id": 11,
+    "question": "Что произойдёт при выполнении `panic(\"ошибка\")`?",
+    "options": [
+      "Завершает текущую горутину и выполняет все отложенные defer",
+      "Завершает всю программу сразу",
+      "Вызывает исключение",
+      "Ничего, это обычная функция"
+    ],
+    "correct": 0,
+    "exp": 15
+  },
+  {
+    "id": 12,
+    "question": "Какой пакет предоставляет функции для работы с аргументами командной строки?",
+    "options": ["os", "flag", "fmt", "syscall"],
+    "correct": 1,
+    "exp": 10
+  },
+  {
+    "id": 13,
+    "question": "Что выведет `fmt.Print(\"Hello\", \"World\")`?",
+    "options": ["HelloWorld", "Hello World", "Hello,World", "Hello World (с пробелом)"],
+    "correct": 0,
+    "exp": 5
+  },
+  {
+    "id": 14,
+    "question": "Какой тип данных в Go может быть `nil`?",
+    "options": ["slice", "map", "chan", "все вышеперечисленные"],
+    "correct": 3,
+    "exp": 15
+  },
+  {
+    "id": 15,
+    "question": "Как объявить массив из 10 целых чисел?",
+    "options": ["var arr [10]int", "arr := [10]int{}", "arr := make([]int, 10)", "var arr []int"],
+    "correct": 0,
+    "exp": 10
+  },
+  {
+    "id": 16,
+    "question": "Что такое `make` используется для?",
+    "options": [
+      "Создания слайсов, мапов и каналов",
+      "Выделения памяти для любого типа",
+      "Создания структур",
+      "Инициализации переменных"
+    ],
+    "correct": 0,
+    "exp": 10
+  },
+  {
+    "id": 17,
+    "question": "Какой синтаксис для проверки существования ключа в мапе?",
+    "options": ["value, ok := m[key]", "value := m[key]", "if key in m", "m.contains(key)"],
+    "correct": 0,
+    "exp": 15
+  },
+  {
+    "id": 18,
+    "question": "Как объявить константу?",
+    "options": ["const Pi = 3.14", "let Pi = 3.14", "var Pi = 3.14", "final Pi = 3.14"],
+    "correct": 0,
+    "exp": 5
+  },
+  {
+    "id": 19,
+    "question": "Что такое метод в Go?",
+    "options": [
+      "Функция с получателем",
+      "Функция, привязанная к типу",
+      "Обычная функция",
+      "Функция обратного вызова"
+    ],
+    "correct": 0,
+    "exp": 10
+  },
+  {
+    "id": 20,
+    "question": "Какой пакет содержит функцию `Printf`?",
+    "options": ["fmt", "log", "printf", "os"],
+    "correct": 0,
+    "exp": 5
+  },
+  {
+    "id": 21,
+    "question": "Какой тип используется для хранения одного символа (Unicode)?",
+    "options": ["byte", "rune", "char", "string"],
+    "correct": 1,
+    "exp": 10
+  },
+  {
+    "id": 22,
+    "question": "Что такое `select` в Go?",
+    "options": [
+      "Оператор для работы с несколькими каналами",
+      "Условный оператор",
+      "Оператор выбора типа",
+      "Оператор переключения"
+    ],
+    "correct": 0,
+    "exp": 15
+  },
+  {
+    "id": 23,
+    "question": "Какой тип данных представляет строку в Go?",
+    "options": ["string", "str", "String", "text"],
+    "correct": 0,
+    "exp": 5
+  },
+  {
+    "id": 24,
+    "question": "Как получить длину строки?",
+    "options": ["len(s)", "s.Len()", "size(s)", "length(s)"],
+    "correct": 0,
+    "exp": 5
+  },
+  {
+    "id": 25,
+    "question": "Что вернёт `len(\"Привет\")`?",
+    "options": ["6", "12", "5", "ошибка"],
+    "correct": 1,
+    "exp": 15
+  },
+  {
+    "id": 26,
+    "question": "Как правильно закрыть канал?",
+    "options": ["close(ch)", "ch.Close()", "delete(ch)", "ch.close()"],
+    "correct": 0,
+    "exp": 10
+  },
+  {
+    "id": 27,
+    "question": "Что произойдёт при чтении из закрытого канала?",
+    "options": [
+      "Получим zero value и false",
+      "Паника",
+      "Бесконечное ожидание",
+      "Ошибка компиляции"
+    ],
+    "correct": 0,
+    "exp": 15
+  },
+  {
+    "id": 28,
+    "question": "Какой мьютекс используется для синхронизации доступа к данным?",
+    "options": ["sync.Mutex", "sync.RWMutex", "sync.WaitGroup", "sync.Cond"],
+    "correct": 0,
+    "exp": 10
+  },
+  {
+    "id": 29,
+    "question": "Что делает оператор `...` в сигнатуре функции?",
+    "options": [
+      "Принимает переменное количество аргументов",
+      "Распаковывает слайс",
+      "Указывает на вариадическую функцию",
+      "Все вышеперечисленное"
+    ],
+    "correct": 3,
+    "exp": 15
+  },
+  {
+    "id": 30,
+    "question": "Какой пакет предоставляет функции для сортировки?",
+    "options": ["sort", "slices", "algorithms", "sorting"],
     "correct": 0,
     "exp": 10
   }

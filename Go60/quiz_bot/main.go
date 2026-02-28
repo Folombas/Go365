@@ -27,11 +27,11 @@ type Question struct {
 
 // UserData хранит статистику игрока
 type UserData struct {
-	TotalEXP       int `json:"total_exp"`
-	CorrectAnswers int `json:"correct_answers"`
-	WrongAnswers   int `json:"wrong_answers"`
-	LastQuestionID int `json:"-"` // ID последнего вопроса (не сохраняем)
-	Level          int `json:"level"`
+	TotalEXP       int   `json:"total_exp"`
+	CorrectAnswers int   `json:"correct_answers"`
+	WrongAnswers   int   `json:"wrong_answers"`
+	Level          int   `json:"level"`
+	AskedQuestions []int `json:"asked_questions"` // ID вопросов, уже заданных пользователю
 }
 
 // глобальные переменные
@@ -144,6 +144,7 @@ func getUser(chatID int64) *UserData {
 			CorrectAnswers: 0,
 			WrongAnswers:   0,
 			Level:          1,
+			AskedQuestions: []int{},
 		}
 	}
 	return users[chatID]
@@ -175,6 +176,7 @@ func handleMessage(msg *tgbotapi.Message) {
 			"/quiz – получить случайный вопрос\n" +
 			"/score – твоя статистика\n" +
 			"/leaderboard – таблица лидеров\n" +
+			"/reset – сбросить прогресс и начать заново\n" +
 			"/help – справка"
 		bot.Send(tgbotapi.NewMessage(chatID, text))
 
@@ -182,27 +184,34 @@ func handleMessage(msg *tgbotapi.Message) {
 		text := "📋 Доступные команды:\n" +
 			"/quiz – начать викторину (новый вопрос)\n" +
 			"/score – показать твой прогресс\n" +
-			"/leaderboard – топ-10 игроков"
+			"/leaderboard – топ-10 игроков\n" +
+			"/reset – сбросить список отвеченных вопросов"
 		bot.Send(tgbotapi.NewMessage(chatID, text))
 
 	case "quiz":
 		sendRandomQuestion(chatID, user)
 
 	case "score":
+		totalAnswers := user.CorrectAnswers + user.WrongAnswers
 		text := fmt.Sprintf("📊 *Твоя статистика*\n\n"+
 			"Уровень: %d\n"+
 			"Всего EXP: %d\n"+
 			"Правильных ответов: %d\n"+
 			"Неправильных: %d\n"+
-			"Всего ответов: %d",
+			"Всего ответов: %d\n"+
+			"Отвечено вопросов: %d из %d",
 			user.Level, user.TotalEXP, user.CorrectAnswers, user.WrongAnswers,
-			user.CorrectAnswers+user.WrongAnswers)
+			totalAnswers, len(user.AskedQuestions), len(questions))
 		msg := tgbotapi.NewMessage(chatID, text)
 		msg.ParseMode = "Markdown"
 		bot.Send(msg)
 
 	case "leaderboard":
 		sendLeaderboard(chatID)
+
+	case "reset":
+		user.AskedQuestions = []int{}
+		bot.Send(tgbotapi.NewMessage(chatID, "🔄 Прогресс сброшен. Все вопросы снова доступны!"))
 
 	default:
 		bot.Send(tgbotapi.NewMessage(chatID, "Неизвестная команда. Напиши /help"))
@@ -267,8 +276,29 @@ func sendRandomQuestion(chatID int64, user *UserData) {
 		return
 	}
 
-	// Выбираем случайный вопрос
-	q := questions[time.Now().UnixNano()%int64(len(questions))]
+	// Составляем список доступных вопросов (исключая уже заданные)
+	askedMap := make(map[int]bool)
+	for _, id := range user.AskedQuestions {
+		askedMap[id] = true
+	}
+
+	var available []Question
+	for _, q := range questions {
+		if !askedMap[q.ID] {
+			available = append(available, q)
+		}
+	}
+
+	if len(available) == 0 {
+		bot.Send(tgbotapi.NewMessage(chatID, "Вы ответили на все вопросы! Отправьте /reset, чтобы начать заново."))
+		return
+	}
+
+	// Случайный выбор из доступных
+	q := available[time.Now().UnixNano()%int64(len(available))]
+
+	// Добавляем вопрос в список заданных
+	user.AskedQuestions = append(user.AskedQuestions, q.ID)
 
 	// Формируем текст вопроса
 	text := fmt.Sprintf("❓ *Вопрос:*\n%s", q.Question)
