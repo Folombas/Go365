@@ -195,11 +195,7 @@ func handleMessage(msg *tgbotapi.Message) {
 		bot.Send(msg)
 
 	case "help":
-		text := "📋 *Справка по командам:*\n\n" +
-			"🧠 /quiz – начать викторину (новый вопрос)\n" +
-			"📊 /score – показать твой прогресс\n" +
-			"🏆 /leaderboard – топ-10 игроков\n" +
-			"🔄 /reset – сбросить список отвеченных вопросов"
+		text := "📋 *Справка по командам:*\n\n" + getHelpText()
 
 		// Создаём клавиатуру с быстрыми действиями
 		keyboard := tgbotapi.NewInlineKeyboardMarkup(
@@ -301,12 +297,7 @@ func handleCallback(callback *tgbotapi.CallbackQuery) {
 		bot.Request(tgbotapi.NewCallback(callback.ID, ""))
 		return
 	} else if callback.Data == "cmd_help" {
-		text := "📋 Доступные команды:\n" +
-			"/quiz – начать викторину (новый вопрос)\n" +
-			"/score – показать твой прогресс\n" +
-			"/leaderboard – топ-10 игроков\n" +
-			"/reset – сбросить список отвеченных вопросов"
-		bot.Send(tgbotapi.NewMessage(chatID, text))
+		bot.Send(tgbotapi.NewMessage(chatID, getHelpText()))
 		bot.Request(tgbotapi.NewCallback(callback.ID, ""))
 		return
 	}
@@ -358,6 +349,14 @@ func handleCallback(callback *tgbotapi.CallbackQuery) {
 }
 
 // --- Вспомогательные функции ---
+
+func getHelpText() string {
+	return "📋 Доступные команды:\n" +
+		"/quiz – начать викторину (новый вопрос)\n" +
+		"/score – показать твой прогресс\n" +
+		"/leaderboard – топ-10 игроков\n" +
+		"/reset – сбросить список отвеченных вопросов"
+}
 
 func sendRandomQuestion(chatID int64, user *UserData) {
 	if len(questions) == 0 {
