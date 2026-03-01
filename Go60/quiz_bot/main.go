@@ -171,22 +171,54 @@ func handleMessage(msg *tgbotapi.Message) {
 	switch msg.Command() {
 	case "start":
 		text := "Привет! Я Go-викторина 🧠\n\n" +
-			"Проверь свои знания языка Go. Отвечай на вопросы и получай EXP.\n\n" +
-			"Команды:\n" +
-			"/quiz – получить случайный вопрос\n" +
-			"/score – твоя статистика\n" +
-			"/leaderboard – таблица лидеров\n" +
-			"/reset – сбросить прогресс и начать заново\n" +
-			"/help – справка"
-		bot.Send(tgbotapi.NewMessage(chatID, text))
+			"Проверь свои знания языка Go. Отвечай на вопросы и получай EXP."
+
+		// Создаём клавиатуру с основными командами
+		keyboard := tgbotapi.NewInlineKeyboardMarkup(
+			tgbotapi.NewInlineKeyboardRow(
+				tgbotapi.NewInlineKeyboardButtonData("🧠 Начать викторину", "cmd_quiz"),
+			),
+			tgbotapi.NewInlineKeyboardRow(
+				tgbotapi.NewInlineKeyboardButtonData("📊 Моя статистика", "cmd_score"),
+			),
+			tgbotapi.NewInlineKeyboardRow(
+				tgbotapi.NewInlineKeyboardButtonData("🏆 Таблица лидеров", "cmd_leaderboard"),
+				tgbotapi.NewInlineKeyboardButtonData("🔄 Сбросить прогресс", "cmd_reset"),
+			),
+			tgbotapi.NewInlineKeyboardRow(
+				tgbotapi.NewInlineKeyboardButtonData("ℹ️ Помощь", "cmd_help"),
+			),
+		)
+
+		msg := tgbotapi.NewMessage(chatID, text)
+		msg.ReplyMarkup = keyboard
+		bot.Send(msg)
 
 	case "help":
-		text := "📋 Доступные команды:\n" +
-			"/quiz – начать викторину (новый вопрос)\n" +
-			"/score – показать твой прогресс\n" +
-			"/leaderboard – топ-10 игроков\n" +
-			"/reset – сбросить список отвеченных вопросов"
-		bot.Send(tgbotapi.NewMessage(chatID, text))
+		text := "📋 *Справка по командам:*\n\n" +
+			"🧠 /quiz – начать викторину (новый вопрос)\n" +
+			"📊 /score – показать твой прогресс\n" +
+			"🏆 /leaderboard – топ-10 игроков\n" +
+			"🔄 /reset – сбросить список отвеченных вопросов"
+
+		// Создаём клавиатуру с быстрыми действиями
+		keyboard := tgbotapi.NewInlineKeyboardMarkup(
+			tgbotapi.NewInlineKeyboardRow(
+				tgbotapi.NewInlineKeyboardButtonData("🧠 Начать викторину", "cmd_quiz"),
+			),
+			tgbotapi.NewInlineKeyboardRow(
+				tgbotapi.NewInlineKeyboardButtonData("📊 Моя статистика", "cmd_score"),
+				tgbotapi.NewInlineKeyboardButtonData("🏆 Лидеры", "cmd_leaderboard"),
+			),
+			tgbotapi.NewInlineKeyboardRow(
+				tgbotapi.NewInlineKeyboardButtonData("🔄 Сбросить прогресс", "cmd_reset"),
+			),
+		)
+
+		msg := tgbotapi.NewMessage(chatID, text)
+		msg.ParseMode = "Markdown"
+		msg.ReplyMarkup = keyboard
+		bot.Send(msg)
 
 	case "quiz":
 		sendRandomQuestion(chatID, user)
@@ -202,8 +234,24 @@ func handleMessage(msg *tgbotapi.Message) {
 			"Отвечено вопросов: %d из %d",
 			user.Level, user.TotalEXP, user.CorrectAnswers, user.WrongAnswers,
 			totalAnswers, len(user.AskedQuestions), len(questions))
+
+		// Создаём клавиатуру с быстрыми действиями
+		keyboard := tgbotapi.NewInlineKeyboardMarkup(
+			tgbotapi.NewInlineKeyboardRow(
+				tgbotapi.NewInlineKeyboardButtonData("🧠 Начать викторину", "cmd_quiz"),
+			),
+			tgbotapi.NewInlineKeyboardRow(
+				tgbotapi.NewInlineKeyboardButtonData("🏆 Таблица лидеров", "cmd_leaderboard"),
+				tgbotapi.NewInlineKeyboardButtonData("🔄 Сбросить прогресс", "cmd_reset"),
+			),
+			tgbotapi.NewInlineKeyboardRow(
+				tgbotapi.NewInlineKeyboardButtonData("ℹ️ Помощь", "cmd_help"),
+			),
+		)
+
 		msg := tgbotapi.NewMessage(chatID, text)
 		msg.ParseMode = "Markdown"
+		msg.ReplyMarkup = keyboard
 		bot.Send(msg)
 
 	case "leaderboard":
@@ -221,6 +269,47 @@ func handleMessage(msg *tgbotapi.Message) {
 func handleCallback(callback *tgbotapi.CallbackQuery) {
 	chatID := callback.Message.Chat.ID
 	user := getUser(chatID)
+
+	// Обработка команд из кнопок меню
+	if callback.Data == "cmd_quiz" {
+		sendRandomQuestion(chatID, user)
+		bot.Request(tgbotapi.NewCallback(callback.ID, ""))
+		return
+	} else if callback.Data == "cmd_score" {
+		totalAnswers := user.CorrectAnswers + user.WrongAnswers
+		text := fmt.Sprintf("📊 *Твоя статистика*\n\n"+
+			"Уровень: %d\n"+
+			"Всего EXP: %d\n"+
+			"Правильных ответов: %d\n"+
+			"Неправильных: %d\n"+
+			"Всего ответов: %d\n"+
+			"Отвечено вопросов: %d из %d",
+			user.Level, user.TotalEXP, user.CorrectAnswers, user.WrongAnswers,
+			totalAnswers, len(user.AskedQuestions), len(questions))
+		msg := tgbotapi.NewMessage(chatID, text)
+		msg.ParseMode = "Markdown"
+		bot.Send(msg)
+		bot.Request(tgbotapi.NewCallback(callback.ID, ""))
+		return
+	} else if callback.Data == "cmd_leaderboard" {
+		sendLeaderboard(chatID)
+		bot.Request(tgbotapi.NewCallback(callback.ID, ""))
+		return
+	} else if callback.Data == "cmd_reset" {
+		user.AskedQuestions = []int{}
+		bot.Send(tgbotapi.NewMessage(chatID, "🔄 Прогресс сброшен. Все вопросы снова доступны!"))
+		bot.Request(tgbotapi.NewCallback(callback.ID, ""))
+		return
+	} else if callback.Data == "cmd_help" {
+		text := "📋 Доступные команды:\n" +
+			"/quiz – начать викторину (новый вопрос)\n" +
+			"/score – показать твой прогресс\n" +
+			"/leaderboard – топ-10 игроков\n" +
+			"/reset – сбросить список отвеченных вопросов"
+		bot.Send(tgbotapi.NewMessage(chatID, text))
+		bot.Request(tgbotapi.NewCallback(callback.ID, ""))
+		return
+	}
 
 	// Данные кнопки: "answer_<question_id>_<option_index>"
 	var qid, opt int
