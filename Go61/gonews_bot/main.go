@@ -16,16 +16,21 @@ import (
 	"github.com/mmcdole/gofeed"
 )
 
-// RSS-ленты с новостями о Go
+// RSS-ленты: Go, вайб-кодинг, ИИ (полная версия)
 var rssFeeds = []string{
-	"https://go.dev/blog/feed.atom",        // официальный блог Go
-	"https://habr.com/ru/hub/go/rss/",      // Хабр (Go)
-	"https://www.reddit.com/r/golang/.rss", // Reddit r/golang
-	"https://golangweekly.com/rss",         // Golang Weekly
-	"https://www.calhoun.io/feed",          // Джон Кэлхаун (уроки)
+	// Официальные и стабильные (работают всегда)
+	"https://go.dev/blog/feed.atom", // Официальный блог Go
+
+	// Русскоязычные (новые ссылки Хабра, которые работают)
+	"https://habr.com/ru/rss/hubs/go/feed.xml",          // Хабр: Go (новая ссылка)
+	"https://habr.com/ru/rss/hubs/ai/feed.xml",          // Хабр: ИИ (новая ссылка)
+	"https://habr.com/ru/rss/hubs/programming/feed.xml", // Хабр: Программирование
+
+	// Англоязычные (легкодоступные)
+	"https://golangweekly.com/rss", // Golang Weekly
+	"https://dev.to/feed/tag/go",   // DEV.to (Go)
 }
 
-// Конфигурация
 const (
 	MaxNewsHours = 4 // новости за последние 4 часа
 )
@@ -46,16 +51,16 @@ var (
 
 func main() {
 	// Загружаем .env
-	err := godotenv.Load()
-	if err != nil {
+	if err := godotenv.Load(); err != nil {
 		log.Println("Файл .env не найден, используем системные переменные")
 	}
 
 	token := os.Getenv("TELEGRAM_BOT_TOKEN")
 	if token == "" {
-		log.Fatal("Не задан TELEGRAM_BOT_TOKEN в .env")
+		log.Fatal("TELEGRAM_BOT_TOKEN не задан")
 	}
 
+	var err error
 	bot, err = tgbotapi.NewBotAPI(token)
 	if err != nil {
 		log.Fatal("Ошибка создания бота:", err)
@@ -111,13 +116,13 @@ func addEXP(chatID int64, amount int) {
 	user.TotalEXP += amount
 	user.TotalRequests++
 	updateLevel(user)
+	saveUserData() // сохраняем сразу, чтобы не потерять
 }
 
 func updateLevel(user *UserData) {
 	newLevel := user.TotalEXP/50 + 1
 	if newLevel > user.Level {
 		user.Level = newLevel
-		// здесь можно отправить сообщение о повышении уровня, но пока оставим
 	}
 }
 
@@ -140,7 +145,6 @@ func saveUserData() {
 
 func handleMessage(msg *tgbotapi.Message) {
 	chatID := msg.Chat.ID
-	user := getUser(chatID)
 
 	if !msg.IsCommand() {
 		return
@@ -150,6 +154,7 @@ func handleMessage(msg *tgbotapi.Message) {
 	case "start":
 		sendWelcome(chatID)
 	case "stats":
+		user := getUser(chatID)
 		sendStats(chatID, user)
 	case "help":
 		sendHelp(chatID)
@@ -160,31 +165,29 @@ func handleMessage(msg *tgbotapi.Message) {
 
 func handleCallback(callback *tgbotapi.CallbackQuery) {
 	chatID := callback.Message.Chat.ID
-	user := getUser(chatID)
 
 	switch callback.Data {
 	case "fresh_news":
-		// Отвечаем, что ищем новости
-		bot.Request(tgbotapi.NewCallback(callback.ID, "Ищу свежие новости..."))
-		// Получаем новости
+		// Сразу отвечаем, чтобы убрать "часики"
+		bot.Request(tgbotapi.NewCallback(callback.ID, ""))
+
 		news := fetchFreshNews()
 		if len(news) == 0 {
 			bot.Send(tgbotapi.NewMessage(chatID, "😕 За последние 4 часа новостей не найдено. Попробуй позже."))
-		} else {
-			// Формируем сообщение
-			text := "📰 *Свежие новости Go за последние 4 часа:*\n\n"
-			for i, item := range news {
-				text += fmt.Sprintf("%d. [%s](%s)\n", i+1, item.Title, item.Link)
-			}
-			msg := tgbotapi.NewMessage(chatID, text)
-			msg.ParseMode = "Markdown"
-			msg.DisableWebPagePreview = true
-			bot.Send(msg)
+			return
 		}
-		// Начисляем EXP
+
+		text := "📰 *Свежие новости Go за последние 4 часа:*\n\n"
+		for i, item := range news {
+			text += fmt.Sprintf("%d. [%s](%s)\n", i+1, item.Title, item.Link)
+		}
+		msg := tgbotapi.NewMessage(chatID, text)
+		msg.ParseMode = "Markdown"
+		msg.DisableWebPagePreview = true
+		bot.Send(msg)
+
 		addEXP(chatID, expPerRequest)
-		// Обновляем сообщение с кнопкой (убираем часики)
-		bot.Request(tgbotapi.NewCallback(callback.ID, ""))
+
 	default:
 		bot.Request(tgbotapi.NewCallback(callback.ID, "Неизвестная команда"))
 	}
@@ -193,10 +196,10 @@ func handleCallback(callback *tgbotapi.CallbackQuery) {
 func sendWelcome(chatID int64) {
 	keyboard := tgbotapi.NewInlineKeyboardMarkup(
 		tgbotapi.NewInlineKeyboardRow(
-			tgbotapi.NewInlineKeyboardButtonData("🚀 Fresh IT News", "fresh_news"),
+			tgbotapi.NewInlineKeyboardButtonData("Fresh IT News", "fresh_news"),
 		),
 	)
-	msg := tgbotapi.NewMessage(chatID, "Привет! Я бот, который собирает свежие IT-новости о языке Go и Go-стеке.\n\nНажми кнопку ниже, чтобы получить новости за последние 4 часа.")
+	msg := tgbotapi.NewMessage(chatID, "Привет! Я собираю свежие IT-новости о Go и Go-стеке.\n\nНажми кнопку ниже, чтобы получить новости за последние 4 часа.")
 	msg.ReplyMarkup = keyboard
 	bot.Send(msg)
 }
@@ -262,7 +265,6 @@ func fetchFreshNews() []NewsItem {
 		}
 	}
 
-	// Сортируем по дате (свежие сверху)
 	sort.Slice(allNews, func(i, j int) bool {
 		return allNews[i].Date.After(allNews[j].Date)
 	})
