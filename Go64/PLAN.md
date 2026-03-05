@@ -68,19 +68,19 @@ func holidaysHandler(w http.ResponseWriter, r *http.Request) {
 
 ## ✅ Критерии готовности
 
-- [ ] Кнопка отображается в левом нижнем углу
-- [ ] По клику открывается страница праздников
-- [ ] Страница адаптивная и красивая
-- [ ] Список праздников актуален для 5 марта
-- [ ] Работает возврат на главную
-- [ ] Сохраняется тема (тёмная/светлая)
-- [ ] Код закоммичен и отправлен в репозиторий
+- [x] Кнопка отображается в левом нижнем углу
+- [x] По клику открывается страница праздников
+- [x] Страница адаптивная и красивая
+- [x] Список праздников актуален для 5 марта
+- [x] Работает возврат на главную
+- [x] Сохраняется тема (тёмная/светлая)
+- [x] Код закоммичен и отправлен в репозиторий
 
 ---
 
 ## 📝 Заметки
 
-> **Важно**: Сегодня я продолжу работу над существующим проектом, а не начинаю с нуля.  
+> **Важно**: Сегодня я продолжу работу над существующим проектом, а не начинаю с нуля.
 > Это уже вторая сессия в рамках одного проекта — тактика работает! 💪
 
 ---
@@ -88,5 +88,15 @@ func holidaysHandler(w http.ResponseWriter, r *http.Request) {
 ## 🚀 Коммиты (заполняется по ходу работы)
 
 ```
-TBD
+commit 80741e7 - Go64: Add holidays page feature
+
+- Added /holidays route with handler for March 5th holidays
+- Created holidaysTmpl template with responsive design
+- Added holidays button in bottom-left corner of main page
+- Implemented 5 holidays: Efficiency Day, Archivist Day, Sports Day, Pushkin Birthday, Orthodox holiday
+- Added theme toggle support (dark/light) with localStorage persistence
+- Fully responsive design: mobile (≤480px), tablet (481-768px), desktop (>769px)
+- Material Design styling with gradient backgrounds and animations
+- Back button navigation to main page
+- Google Fonts (Montserrat, Open Sans) for typography
 ```
