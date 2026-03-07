@@ -15,28 +15,51 @@ type Player struct {
 	Dopamine      int      // Уровень дофамина
 	Temptations   []string // Список преодоленных искушений
 	Achievements  []string // Достижения
+	
+	// Новые поля для расширенной системы
+	SkillTree     *SkillTree
+	Quests        *QuestSystem
+	Level         int      // Уровень игрока
+	Experience    int      // Опыт для следующего уровня
+	PlayTime      int      // Время игры в минутах
+	DaysPlayed    int      // Количество сыгранных дней
 }
 
 func NewPlayer(name string) *Player {
 	rand.Seed(time.Now().UnixNano())
-	return &Player{
+	player := &Player{
 		Name:        name,
 		Focus:       70,
 		GoKnowledge: 40,
 		Willpower:   65,
 		Money:       500,
 		Dopamine:    200,
+		Level:       1,
+		Experience:  0,
+		PlayTime:    0,
+		DaysPlayed:  1,
 	}
+	
+	// Инициализируем систему навыков и квестов
+	player.SkillTree = NewSkillTree()
+	player.Quests = NewQuestSystem()
+	
+	// Применяем начальные бонусы от навыков
+	player.ApplySkillBonuses()
+	
+	return player
 }
 
 func (p *Player) DisplayStatus() {
 	fmt.Println("👤 СТАТУС ИГРОКА:")
 	fmt.Printf("Имя: %s\n", p.Name)
-	fmt.Printf("Фокус: %d%%\n", p.Focus)
-	fmt.Printf("Знание Go: %d/100\n", p.GoKnowledge)
-	fmt.Printf("Сила воли: %d%%\n", p.Willpower)
-	fmt.Printf(  "Деньги: %d₽\n", p.Money)
-	fmt.Printf("Дофамин: %d\n", p.Dopamine)
+	fmt.Printf("Уровень: %d (Опыт: %d/%d)\n", p.Level, p.Experience, p.Level*100)
+	fmt.Printf("Фокус: %d%% (бонус: +%d)\n", p.Focus, p.SkillTree.GetTotalBonus("focus"))
+	fmt.Printf("Знание Go: %d/100 (бонус: +%d)\n", p.GoKnowledge, p.SkillTree.GetTotalBonus("knowledge"))
+	fmt.Printf("Сила воли: %d%% (бонус: +%d)\n", p.Willpower, p.SkillTree.GetTotalBonus("willpower"))
+	fmt.Printf("Деньги: %d₽ (бонус: +%d)\n", p.Money, p.SkillTree.GetTotalBonus("money"))
+	fmt.Printf("Дофамин: %d (бонус: +%d)\n", p.Dopamine, p.SkillTree.GetTotalBonus("dopamine"))
+	fmt.Printf("Дней сыграно: %d | Время: %d мин\n", p.DaysPlayed, p.PlayTime)
 	fmt.Println()
 }
 
@@ -89,7 +112,7 @@ func (p *Player) StudyGo(points int) {
 
 func (p *Player) ReceiveMotivation(m Motivation) {
 	fmt.Printf("\n💪 МОТИВАЦИЯ: %s\n", m.Text)
-	fmt.Printf("Эффект: %s\n", m.Effect)
+	fmt.Printf("Эффект: %s | XP: +%d\n", m.Effect, m.XPBonus)
 
 	switch m.Effect {
 	case "focus+":
@@ -151,5 +174,100 @@ func (p *Player) ShowAchievements() {
 		for _, achievement := range p.Achievements {
 			fmt.Printf("  ✓ %s\n", achievement)
 		}
+	}
+}
+
+// ApplySkillBonuses применяет все бонусы от навыков
+func (p *Player) ApplySkillBonuses() {
+	p.Focus += p.SkillTree.GetTotalBonus("focus")
+	p.Willpower += p.SkillTree.GetTotalBonus("willpower")
+	p.GoKnowledge += p.SkillTree.GetTotalBonus("knowledge")
+	p.Money += p.SkillTree.GetTotalBonus("money")
+	p.Dopamine += p.SkillTree.GetTotalBonus("dopamine")
+	
+	// Ограничиваем значения
+	if p.Focus > 100 { p.Focus = 100 }
+	if p.Willpower > 100 { p.Willpower = 100 }
+	if p.GoKnowledge > 100 { p.GoKnowledge = 100 }
+}
+
+// AddExperience добавляет опыт и проверяет повышение уровня
+func (p *Player) AddExperience(xp int) {
+	p.Experience += xp
+	fmt.Printf("\n✨ +%d опыта\n", xp)
+	
+	// Проверяем повышение уровня
+	xpNeeded := p.Level * 100
+	for p.Experience >= xpNeeded {
+		p.LevelUp()
+		xpNeeded = p.Level * 100
+	}
+}
+
+// LevelUp повышает уровень игрока
+func (p *Player) LevelUp() {
+	p.Experience -= p.Level * 100
+	p.Level++
+	p.Focus = 100
+	p.Willpower = 100
+	
+	fmt.Printf("\n🎉 УРОВЕНЬ ПОВЫШЕН! Теперь уровень %d\n", p.Level)
+	fmt.Println("   Фокус и сила воли восстановлены!")
+	
+	// Начисляем очки навыков
+	skillPoints := 2 + (p.Level / 5) // 2 очка + 1 каждые 5 уровней
+	p.SkillTree.EarnSkillPoints(skillPoints)
+	
+	// Добавляем достижение
+	p.Achievements = append(p.Achievements, fmt.Sprintf("Достигнут уровень %d", p.Level))
+	
+	// Особые достижения
+	if p.Level == 5 {
+		p.Achievements = append(p.Achievements, "🏆 Go-Новичок: Уровень 5")
+	}
+	if p.Level == 10 {
+		p.Achievements = append(p.Achievements, "🏆 Go-Разработчик: Уровень 10")
+	}
+	if p.Level == 20 {
+		p.Achievements = append(p.Achievements, "🏆 Go-Мастер: Уровень 20")
+	}
+	if p.Level == 30 {
+		p.Achievements = append(p.Achievements, "🏆 Go-Легенда: Уровень 30")
+	}
+}
+
+// AddPlayTime добавляет время игры
+func (p *Player) AddPlayTime(minutes int) {
+	p.PlayTime += minutes
+}
+
+// DisplayStatistics отображает расширенную статистику
+func (p *Player) DisplayStatistics() {
+	fmt.Println("\n📊 СТАТИСТИКА ИГРЫ")
+	fmt.Println("══════════════════════════════════════")
+	fmt.Printf("🎮 Уровень: %d\n", p.Level)
+	fmt.Printf("⭐ Опыт: %d/%d\n", p.Experience, p.Level*100)
+	fmt.Printf("🕐 Время в игре: %d минут\n", p.PlayTime)
+	fmt.Printf("📅 Дней сыграно: %d\n", p.DaysPlayed)
+	fmt.Printf("💪 Преодолено искушений: %d\n", len(p.Temptations))
+	fmt.Printf("🏆 Достигнуто достижений: %d\n", len(p.Achievements))
+	fmt.Printf("🎯 Выполнено квестов: %d\n", p.Quests.TotalCompleted)
+	fmt.Printf("🔥 Текущая серия: %d дней\n", p.Quests.DayStreak)
+	fmt.Printf("✨ Очков навыков: %d (всего: %d)\n", p.SkillTree.SkillPoints, p.SkillTree.TotalPoints)
+	
+	// Рассчитываем общий рейтинг
+	rating := p.CalculateScore() + (p.Level * 100) + (len(p.Achievements) * 50)
+	fmt.Printf("\n🏅 ОБЩИЙ РЕЙТИНГ: %d\n", rating)
+	
+	if rating < 500 {
+		fmt.Println("Ранг: 🌱 Начинающий гофер")
+	} else if rating < 1500 {
+		fmt.Println("Ранг: 🌿 Ученик разработчика")
+	} else if rating < 3000 {
+		fmt.Println("Ранг: 🌳 Junior Go Developer")
+	} else if rating < 5000 {
+		fmt.Println("Ранг: 🏢 Middle Go Developer")
+	} else {
+		fmt.Println("Ранг: 🚀 Senior Go Master")
 	}
 }
