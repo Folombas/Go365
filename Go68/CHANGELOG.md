@@ -1,473 +1,389 @@
-# 📝 CHANGELOG — Day 68 (9 марта 2026)
+# 📝 CHANGELOG — Day 68 (8 марта 2026)
 
-**Дата:** 9 марта 2026 года  
+**Дата:** 8 марта 2026 года  
 **День челленджа:** 68  
-**Проект:** FocusGo — Интеграция SQLite базы данных
+**Проект:** FocusGo — Telegram Bot (Полная разработка + Деплой)
 
 ---
 
 ## 🎯 Цель дня
 
-**Критичное обновление:** Интеграция базы данных для надёжного сохранения прогресса игроков.
-
-**Проблема:**
-- ❌ При перезапуске бота все игроки теряли прогресс
-- ❌ Данные хранились только в памяти (map[int64]*Player)
-- ❌ Нельзя было играть с нескольких устройств
-- ❌ Не было истории и статистики
-
-**Решение:**
-- ✅ SQLite база данных
-- ✅ Автосохранение после каждого действия
-- ✅ Загрузка прогресса при старте
-- ✅ Таблица лидеров
+**Разработка Telegram-бота FocusGo с нуля и деплой на удалённый сервер Ubuntu 24.04 (Beget)**
 
 ---
 
-## 📋 Выполненные задачи
+## ✅ Выполненные задачи
 
-### ✅ 1. Интеграция SQLite
+### 1. Создание проекта FocusGo
 
-**Установка драйвера:**
-```bash
-go get github.com/mattn/go-sqlite3
+**Структура проекта:**
+```
+focusgo/
+├── cmd/focusgo/
+│   └── main.go          # Точка входа
+├── internal/
+│   ├── database/        # БД + бэкапы + миграции
+│   ├── game/            # Игровая логика
+│   │   ├── game_state.go
+│   │   ├── quests.go
+│   │   ├── skills.go
+│   │   └── achievements.go
+│   ├── models/          # Модели данных
+│   ├── notifications/   # Уведомления
+│   └── validator/       # Валидация данных
+├── .env                 # Токен бота
+├── .env.example         # Шаблон конфигурации
+├── DEPLOY.md            # Инструкция по деплою
+├── README.md            # Документация
+└── go.mod               # Зависимости
 ```
 
-**Почему SQLite:**
-- Простота (один файл)
-- Не требует отдельного сервера
-- Быстро для небольших проектов
-- Отличная поддержка в Go
+**Зависимости:**
+- `github.com/go-telegram-bot-api/telegram-bot-api/v5`
+- `github.com/mattn/go-sqlite3`
+- `github.com/joho/godotenv`
 
 ---
 
-### ✅ 2. Схема базы данных
+### 2. Игровая логика
 
-**7 таблиц:**
-
-#### 1. `players` — Игроки
-```sql
-CREATE TABLE players (
-    chat_id INTEGER PRIMARY KEY,
-    name TEXT NOT NULL,
-    level INTEGER DEFAULT 1,
-    experience INTEGER DEFAULT 0,
-    go_knowledge INTEGER DEFAULT 40,
-    focus INTEGER DEFAULT 70,
-    willpower INTEGER DEFAULT 65,
-    money INTEGER DEFAULT 500,
-    dopamine INTEGER DEFAULT 200,
-    play_time INTEGER DEFAULT 0,
-    days_played INTEGER DEFAULT 1,
-    current_day INTEGER DEFAULT 1,
-    hour INTEGER DEFAULT 8,
-    game_active INTEGER DEFAULT 0,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
-)
-```
-
-#### 2. `skills` — Навыки
-```sql
-CREATE TABLE skills (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    chat_id INTEGER NOT NULL,
-    skill_id TEXT NOT NULL,
-    level INTEGER DEFAULT 0,
-    unlocked INTEGER DEFAULT 0,
-    FOREIGN KEY (chat_id) REFERENCES players(chat_id) ON DELETE CASCADE,
-    UNIQUE(chat_id, skill_id)
-)
-```
-
-#### 3. `quests` — Квесты
-```sql
-CREATE TABLE quests (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    chat_id INTEGER NOT NULL,
-    quest_id TEXT NOT NULL,
-    progress INTEGER DEFAULT 0,
-    completed INTEGER DEFAULT 0,
-    deadline DATE,
-    FOREIGN KEY (chat_id) REFERENCES players(chat_id) ON DELETE CASCADE,
-    UNIQUE(chat_id, quest_id)
-)
-```
-
-#### 4. `achievements` — Достижения
-```sql
-CREATE TABLE achievements (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    chat_id INTEGER NOT NULL,
-    achievement TEXT NOT NULL,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (chat_id) REFERENCES players(chat_id) ON DELETE CASCADE
-)
-```
-
-#### 5. `temptations_resisted` — Преодолённые искушения
-```sql
-CREATE TABLE temptations_resisted (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    chat_id INTEGER NOT NULL,
-    temptation_name TEXT NOT NULL,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (chat_id) REFERENCES players(chat_id) ON DELETE CASCADE
-)
-```
-
-#### 6. `game_sessions` — Игровые сессии (история дней)
-```sql
-CREATE TABLE game_sessions (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    chat_id INTEGER NOT NULL,
-    day_number INTEGER NOT NULL,
-    score INTEGER DEFAULT 0,
-    boss_defeated INTEGER DEFAULT 0,
-    quests_completed INTEGER DEFAULT 0,
-    play_time INTEGER DEFAULT 0,
-    completed_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (chat_id) REFERENCES players(chat_id) ON DELETE CASCADE
-)
-```
-
-#### 7. `day_streaks` — Серия дней
-```sql
-CREATE TABLE day_streaks (
-    chat_id INTEGER PRIMARY KEY,
-    current_streak INTEGER DEFAULT 0,
-    best_streak INTEGER DEFAULT 0,
-    last_quest_date DATE,
-    total_quests_completed INTEGER DEFAULT 0,
-    FOREIGN KEY (chat_id) REFERENCES players(chat_id) ON DELETE CASCADE
-)
-```
-
-**Индексы для ускорения:**
-```sql
-CREATE INDEX idx_skills_chat ON skills(chat_id);
-CREATE INDEX idx_quests_chat ON quests(chat_id);
-CREATE INDEX idx_achievements_chat ON achievements(chat_id);
-CREATE INDEX idx_sessions_chat ON game_sessions(chat_id);
-```
-
----
-
-### ✅ 3. Система миграций
-
-**Файл:** `migrations.go`
-
-**Возможности:**
-- Автоматическое применение миграций при старте
-- Таблица `schema_migrations` для отслеживания версий
-- Откат миграций (для отладки)
-- Просмотр статуса миграций
-
-**Пример миграции:**
+#### GameState — состояние игрока
 ```go
-var migrations = []Migration{
-    {
-        Version: 1,
-        Name:    "create_tables",
-        Up:      createTables,
-    },
-    {
-        Version: 2,
-        Name:    "add_temptations_table",
-        Up: func() error {
-            // SQL запрос
-        },
-    },
+type GameState struct {
+    ChatID       int64
+    Name         string
+    Level        int
+    Experience   int
+    GoKnowledge  int
+    Focus        int
+    Willpower    int
+    Money        int
+    Dopamine     int
+    PlayTime     int
+    DaysPlayed   int
+    CurrentDay   int
+    CurrentHour  int
+    SkillBonuses map[string]int
 }
 ```
 
----
-
-### ✅ 4. Загрузка/сохранение игрока
-
-**Файл:** `database.go`
-
-**Функции:**
-
-#### SavePlayer
-```go
-func SavePlayer(player *Player) error
-```
-- Сохраняет основные характеристики
-- Сохраняет навыки (12 штук)
-- Сохраняет квесты (5 штук)
-- Сохраняет достижения
-- Логирует операцию
-
-#### LoadPlayer
-```go
-func LoadPlayer(chatID int64) (*Player, error)
-```
-- Загружает игрока по chat_id
-- Возвращает nil, если игрок не найден
-- Загружает все связанные данные
-- Применяет бонусы от навыков
-
-#### Вспомогательные функции:
-- `saveSkills()` / `loadSkills()`
-- `saveQuests()` / `loadQuests()`
-- `saveAchievements()` / `loadAchievements()`
-- `saveDayStreak()` / `loadDayStreak()`
-- `saveGameSession()` — сохранение истории дня
+#### Механики:
+- **Изучение Go** (30/60 мин) — опыт + знания
+- **Отдых** (15/30 мин) — восстановление фокуса
+- **Искушения** (35% шанс) — сопротивление с расчётом шансов
+- **Финальная битва** — 5 боссов с разной силой
 
 ---
 
-### ✅ 5. Автосохранение
+### 3. Квесты (5 ежедневных)
 
-**Интеграция в game.go:**
-
-После КАЖДОГО действия игрока:
-```go
-// Изучение Go
-func handleStudyGo30(chatID int64) {
-    player := players[chatID]
-    // ... логика ...
-    
-    // Сохраняем в БД после каждого действия
-    if err := SavePlayer(player); err != nil {
-        log.Printf("Ошибка сохранения: %v", err)
-    }
-}
-```
-
-**Когда сохраняется:**
-- ✅ Изучение Go (30/60 минут)
-- ✅ Отдых (15/30 минут)
-- ✅ Улучшение навыка
-- ✅ Преодоление искушения
-- ✅ Получение мотивации
-- ✅ Завершение дня
-- ✅ Команда /save
+| Квест | Цель | Награда |
+|-------|------|---------|
+| 30 минут Go | 30 мин | 2 очка навыков |
+| Борец с искушениями | 3 победы | 3 очка |
+| Практика кода | 50 строк | 3 очка |
+| Утренний ритуал | 1 раз | 1 очко |
+| Цифровой детокс | 4 часа | 2 очка |
 
 ---
 
-### ✅ 6. Таблица лидеров
+### 4. Дерево навыков (12 навыков)
 
-**Новая команда:** `/leaderboard`
+#### 📚 GO-НАВЫКИ (6)
+- Основы Go (начальный)
+- Конкурентность
+- Интерфейсы
+- Web Фреймворки
+- Базы данных
+- Микросервисы
 
-**Функция:**
-```go
-func GetLeaderboard(limit int) ([]map[string]interface{}, error) {
-    query := `
-        SELECT name, level, experience, go_knowledge, 
-               (go_knowledge * 10 + focus * 5 + willpower * 3) as rating
-        FROM players
-        ORDER BY rating DESC
-        LIMIT ?
-    `
-    // ...
-}
+#### 🎯 ФОКУС (3)
+- Мастер Фокуса (начальный)
+- Медитация
+- Борьба с прокрастинацией
+
+#### 💪 СИЛА ВОЛИ (2)
+- Сила Воли (начальный)
+- Дисциплина
+
+#### 💰 ФИНАНСЫ (1)
+- Управление деньгами
+
+**Механика:**
+- Очки навыков: 2 + (уровень / 5) за уровень
+- Стоимость улучшения: 1-4 очка
+- Бонусы: +5-12 к характеристикам за уровень
+
+---
+
+### 5. Таблица лидеров
+
+**Формула рейтинга:**
+```
+рейтинг = Знание Go × 10 + Фокус × 5 + Сила воли × 3 + Уровень × 100
 ```
 
-**Формат вывода:**
+**Команда:** `/leaderboard`
+
+**Отображение:**
 ```
 🏆 ТАБЛИЦА ЛИДЕРОВ
-━━━━━━━━━━━━━━━━━━━━
-
-Топ-10 игроков FocusGo:
-
-1. Гоша — Ур.5 | Рейтинг: 1250
-2. Александр — Ур.4 | Рейтинг: 980
-3. Мария — Ур.3 | Рейтинг: 750
-...
-
-📊 Всего игроков: 42
+🥇 Гоша — Ур.10 | Рейтинг: 2450
+🥈 Александр — Ур.8 | Рейтинг: 2100
+🥉 Мария — Ур.7 | Рейтинг: 1850
 ```
 
 ---
 
-### ✅ 7. Обработка ошибок и логирование
+### 6. Достижения (23 штуки)
 
-**Логирование:**
-```go
-log.Println("✅ Подключение к базе данных установлено")
-log.Println("✅ Таблицы базы данных созданы")
-log.Printf("💾 Игрок %s (chat_id: %d) сохранён", player.Name, player.ChatID)
-log.Printf("💾 Игрок %s (chat_id: %d) загружен", player.Name, player.ChatID)
+#### Категории:
+- **За уровни** (5): Первые шаги, Go-Новичок, Go-Мастер, Go-Легенда
+- **За квесты** (3): Начинающий, Охотник, Мастер
+- **За серию дней** (2): Недельная, Месячная
+- **За искушения** (3): Борец, Воин, Легенда
+- **За боссов** (2): Убийца, Легенда
+- **За изучение Go** (2): Студент, Учёный
+- **За навыки** (2): Мастер, Коллекционер
+- **Специальные** (4): Перфекционист, Марафонец, Ранняя пташка, Ночная сова
+
+**Команда:** `/achievements`
+
+---
+
+### 7. Menu кнопка и inline-клавиатура
+
+**Команды бота (8):**
+```
+/start — Начать игру
+/menu — Главное меню
+/profile — Твой профиль
+/skills — Дерево навыков
+/quests — Ежедневные квесты
+/stats — Статистика
+/leaderboard — Таблица лидеров
+/achievements — Достижения
+/backup — Бэкап БД
+/help — Справка
 ```
 
-**Обработка ошибок:**
-```go
-if err := SavePlayer(player); err != nil {
-    log.Printf("Ошибка сохранения: %v", err)
-    // Отправляем сообщение пользователю
-    text := `❌ ОШИБКА СОХРАНЕНИЯ!`
-    bot.Send(msg)
-}
+**Inline-клавиатура (14 кнопок):**
+- 📚 Учить Go (30/60 мин)
+- 💤 Отдохнуть (15/30 мин)
+- 📋 Квесты
+- 🌳 Навыки
+- 📊 Статистика
+- 👤 Профиль
+- 💾 Сохранить
+- 🌙 Завершить день
+
+---
+
+### 8. База данных (SQLite)
+
+**Таблицы:**
+- `players` — игроки
+- `skill_trees` — деревья навыков
+- `skills` — навыки игроков
+- `quests` — квесты
+- `achievements` — достижения
+- `notification_settings` — настройки уведомлений
+
+**Миграции:** v1-v6
+
+---
+
+### 9. Уведомления
+
+**Расписание:**
+- **9:00** — Напоминание о квестах
+- **20:00** — Напоминание о финальной битве
+- **22:00** — Напоминание о незавершённых квестах
+
+**Настройки:** `/remind`
+
+---
+
+### 10. Валидация данных
+
+**Защита:**
+- Ограничение характеристик [0-100]
+- Защита от отрицательных значений
+- Валидация при загрузке/сохранении
+- Логирование ошибок
+
+---
+
+### 11. Рефакторинг
+
+**Исправления:**
+- Удалён неиспользуемый пакет `internal/bot/`
+- Добавлен godotenv для загрузки .env
+- Создан .env.example
+- Обновлён README.md
+- Создан DEPLOY.md
+
+---
+
+### 12. Деплой на сервер (Beget)
+
+**Сервер:**
+- OS: Ubuntu 24.04
+- CPU: 1 ядро (3+ GHz)
+- RAM: 1 ГБ
+- Storage: 10 ГБ NVMe
+
+**Шаги:**
+1. Компиляция: `GOOS=linux GOARCH=amd64 go build`
+2. Загрузка: `scp focusgo .env root@server:~/focusgo/`
+3. Настройка: `.env` с токеном
+4. Systemd service: `/etc/systemd/system/focusgo.service`
+5. Запуск: `systemctl enable focusgo && systemctl start focusgo`
+
+**Статус:**
+```
+● focusgo.service - FocusGo Telegram Bot
+  Active: active (running)
+  Main PID: 149541 (focusgo)
+  Memory: 6.1M
 ```
 
-**Graceful Shutdown:**
-```go
-c := make(chan os.Signal, 1)
-signal.Notify(c, os.Interrupt, syscall.SIGTERM)
-go func() {
-    <-c
-    log.Println("🛑 Получен сигнал завершения, закрываем БД...")
-    CloseDB()
-    os.Exit(0)
-}()
+---
+
+## 📊 Статистика
+
+### Код
+| Метрика | Значение |
+|---------|----------|
+| Файлов | 12 |
+| Строк кода | ~4500 |
+| Функций | 100+ |
+| Пакетов | 6 |
+
+### Функционал
+| Компонент | Количество |
+|-----------|------------|
+| Команд бота | 10 |
+| Inline-кнопок | 14 |
+| Навыков | 12 |
+| Квестов | 5 |
+| Достижений | 23 |
+| Боссов | 5 |
+
+### Деплой
+| Параметр | Значение |
+|----------|----------|
+| Сервер | Beget Ubuntu 24.04 |
+| Бинарник | 13 MB |
+| БД | SQLite |
+| Сервис | systemd |
+| Статус | ✅ Active (running) |
+
+---
+
+## 🎮 Игровой процесс
+
+### Начало игры
+```
+/start
+→ Создаётся игрок
+→ Генерируются квесты
+→ Создаётся дерево навыков
+→ Применяются бонусы
+```
+
+### Изучение Go
+```
+📚 Учить Go (30 мин)
+→ Опыт: +15
+→ Знание Go: +6
+→ Дофамин: +10
+→ Прогресс квеста: +30
+```
+
+### Улучшение навыков
+```
+🌳 Навыки → ⬆️ Основы Go (1 очк.)
+→ Уровень: 1 → 2
+→ Бонус: +5 Знание Go
+→ Применение бонуса автоматически
+```
+
+### Финальная битва
+```
+🌙 Завершить день
+→ Босс: 👹 CAPCUT МОНТЁР (сила 95)
+→ Шанс победы: (Воля×2 + Фокус) / 3
+→ Победа: +200 опыта, восстановление
+→ Поражение: -20 опыта, фокус 30%
 ```
 
 ---
 
-## 📊 Статистика разработки
+## 📝 Изменения в коде
 
-### Время разработки
-- Общее время: ~5 часов
-- Проектирование схемы БД: 45 мин
-- Написание database.go: 90 мин
-- Написание migrations.go: 45 мин
-- Интеграция в game.go: 60 мин
-- Тестирование: 30 мин
-- Отладка: 30 мин
+### Новые файлы
+- `cmd/focusgo/main.go` — точка входа
+- `internal/game/game_state.go` — состояние игры
+- `internal/game/quests.go` — квесты
+- `internal/game/skills.go` — навыки
+- `internal/game/achievements.go` — достижения
+- `internal/database/database.go` — БД
+- `internal/database/migrations.go` — миграции
+- `internal/database/backup.go` — бэкапы
+- `internal/notifications/notification.go` — уведомления
+- `internal/validator/validator.go` — валидация
+- `internal/models/player.go` — модели
+- `internal/models/temptation.go` — искушения
 
-### Строки кода
+### Удалённые файлы
+- `internal/bot/bot.go` — неиспользуемый файл
 
-| Файл | Строки | Описание |
-|------|--------|----------|
-| `database.go` | 660 | Модели, БД, загрузка/сохранение |
-| `migrations.go` | 180 | Система миграций |
-| `game.go` | 751 | Интеграция с БД |
-| `main.go` | 258 | Инициализация БД, /leaderboard |
-| **Итого новых** | **~840** | |
-
-### Изменения
-- Добавлено: 1044 строки
-- Изменено: 71 строка
-- Удалено: 0 строк
-
----
-
-## 🎯 Достигнутые улучшения
-
-### До и после
-
-| Характеристика | До | После |
-|---------------|-----|-------|
-| **Хранение** | В памяти (map) | SQLite БД |
-| **Сохранение** | Ручное | Автоматическое |
-| **Потеря данных** | При рестарте | Никогда |
-| **История** | Нет | Есть (game_sessions) |
-| **Таблица лидеров** | Нет | Есть |
-| **Миграции** | Нет | Есть |
-
-### Новые возможности
-
-1. **Надёжное хранение** — данные не теряются
-2. **Автосохранение** — после каждого действия
-3. **История дней** — все сыгранные дни
-4. **Таблица лидеров** — рейтинг игроков
-5. **Миграции схемы** — обновляемость БД
-6. **Graceful shutdown** — корректное завершение
+### Конфигурация
+- `.env` — токен бота
+- `.env.example` — шаблон
+- `DEPLOY.md` — инструкция по деплою
+- `README.md` — документация
 
 ---
 
-## 🐛 Известные проблемы
+## 💭 Итоги
 
-### Текущие ограничения
+**Реализовано:**
+- ✅ Telegram-бот с нуля
+- ✅ Полноценная игровая логика
+- ✅ 12 навыков с бонусами
+- ✅ 5 ежедневных квестов
+- ✅ 23 достижения
+- ✅ Таблица лидеров
+- ✅ Menu кнопка + inline-клавиатура
+- ✅ SQLite БД с миграциями
+- ✅ Автоматические бэкапы
+- ✅ Уведомления по расписанию
+- ✅ Валидация данных
+- ✅ Деплой на Ubuntu 24.04
+- ✅ Systemd service
 
-1. **Конкурентный доступ**
-   - SQLite не оптимизирован для высокой конкуренции
-   - **Решение в будущем:** PostgreSQL для продакшена
+**Влияние:**
+- Подписчики могут играть в Telegram
+- Не нужно устанавливать Go/терминал
+- Соревновательный элемент (лидерборд)
+- Долгосрочные цели (достижения)
+- Мотивация через геймификацию
 
-2. **Размер БД**
-   - Может расти со временем
-   - **Решение:** Очистка старых сессий
+**День 68 завершён!** 🎉
 
-3. **Бэкапы**
-   - Нет автоматических бэкапов
-   - **Решение:** Копирование .db файла
-
----
-
-## 🔮 Планы на будущее
-
-### Следующие критичные задачи
-
-1. **Валидация данных**
-   - Проверка границ (0-100) для характеристик
-   - Защита от отрицательных значений
-
-2. **Оптимизация запросов**
-   - Prepared statements
-   - Транзакции для пакетных операций
-
-3. **Админ-панель**
-   - Статистика по всем игрокам
-   - Рассылка уведомлений
-
-### Фичи
-
-4. **Уведомления**
-   - Ежедневные напоминания о квестах
-   - Напоминание о финальной битве
-
-5. **Реферальная система**
-   - Пригласи друга → бонусы
-
-6. **Статистика**
-   - Личная статистика игрока
-   - Глобальная статистика
+**Бот работает 24/7 на сервере Beget!** 🚀
 
 ---
 
-## 💭 Рефлексия
-
-**Инсайт дня:**
-> "База данных — это фундамент. Без неё проект не имеет смысла для пользователей."
-
-**Урок:**
-> "SQLite — отличный выбор для старта. Просто, надёжно, не требует отдельного сервера."
-
-**Достижение:**
-> "Теперь прогресс игроков сохраняется надёжно! Можно запускать публичный тест."
-
----
-
-## 📝 Итоги дня
-
-### Что сделано
-
-✅ Интегрирована SQLite база данных  
-✅ Создано 7 таблиц для хранения данных  
-✅ Реализована система миграций  
-✅ Загрузка/сохранение игрока  
-✅ Автосохранение после каждого действия  
-✅ Таблица лидеров (/leaderboard)  
-✅ Обработка ошибок и логирование  
-✅ Graceful shutdown  
-✅ Коммит и пуш на GitHub  
-
-### Метрики проекта
-
-**Код:**
-- Файлов: 7 (основных)
-- Строк кода: ~2550
-- Функций: 70+
-- Таблиц БД: 7
-
-**Функционал:**
-- Команд бота: 10
-- Inline-кнопок: 15+
-- Навыков: 12
-- Квестов: 5
-- Искушений: 25+
-
----
-
-## 🚀 Ссылки
+## 🔗 Ссылки
 
 - **Репозиторий:** https://github.com/Folombas/focusgo
-- **Коммит:** 9be0a2c
-- **Изменения:** +1044 строки
+- **Бот в Telegram:** @focusgolang_bot
+- **Коммиты:** 10+ за день
+- **Строк добавлено:** ~4500
 
 ---
 
-**День 68 завершён! 🎉**
-
-*Критичное обновление выполнено. Теперь проект готов к публичному тестированию!*
+**Готово к публичному запуску!** 🎮
