@@ -30,6 +30,15 @@ const (
 	Right
 )
 
+type GameState int
+
+const (
+	Menu GameState = iota
+	Playing
+	Paused
+	GameOver
+)
+
 type Game struct {
 	snake       []Point
 	direction   Direction
@@ -50,6 +59,7 @@ type Game struct {
 	hasKey      bool
 	arrowCount  int
 	shootTimer  int
+	state       GameState
 }
 
 type Point struct {
@@ -100,7 +110,12 @@ func NewGame() *Game {
 		arrows:    []Arrow{},
 		hasKey:    false,
 		arrowCount: 0,
+		state:     Menu,
 	}
+	return g
+}
+
+func (g *Game) startGame() {
 	g.placeFood()
 	g.spawnChest()
 	g.spawnKey()
@@ -108,7 +123,7 @@ func NewGame() *Game {
 	for i := 0; i < 10; i++ {
 		g.spawnEnemy()
 	}
-	return g
+	g.state = Playing
 }
 
 func (g *Game) placeFood() {
@@ -254,12 +269,34 @@ func (g *Game) spawnKey() {
 }
 
 func (g *Game) Update() error {
-	if g.gameOver {
-		// Press Enter to restart
+	switch g.state {
+	case Menu:
+		// Start game with Enter or Space
+		if inpututil.IsKeyJustPressed(ebiten.KeyEnter) || inpututil.IsKeyJustPressed(ebiten.KeySpace) {
+			g.startGame()
+		}
+		return nil
+
+	case Paused:
+		// Unpause with P
+		if inpututil.IsKeyJustPressed(ebiten.KeyP) {
+			g.state = Playing
+		}
+		return nil
+
+	case GameOver:
+		// Restart with Enter
 		if inpututil.IsKeyJustPressed(ebiten.KeyEnter) {
 			*g = *NewGame()
 		}
 		return nil
+
+	case Playing:
+		// Pause with P
+		if inpututil.IsKeyJustPressed(ebiten.KeyP) {
+			g.state = Paused
+			return nil
+		}
 	}
 
 	// Handle input
@@ -303,6 +340,7 @@ func (g *Game) Update() error {
 	// Check wall collision
 	if newHead.X < 0 || newHead.X >= gridSizeX || newHead.Y < 0 || newHead.Y >= gridSizeY {
 		g.gameOver = true
+		g.state = GameOver
 		return nil
 	}
 
@@ -310,6 +348,7 @@ func (g *Game) Update() error {
 	for _, segment := range g.snake {
 		if segment.X == newHead.X && segment.Y == newHead.Y {
 			g.gameOver = true
+			g.state = GameOver
 			return nil
 		}
 	}
@@ -403,6 +442,7 @@ func (g *Game) updateEnemies() {
 		for _, segment := range g.snake {
 			if segment.X == enemy.pos.X && segment.Y == enemy.pos.Y {
 				g.gameOver = true
+				g.state = GameOver
 				return
 			}
 		}
@@ -418,6 +458,7 @@ func (g *Game) updateBombs() {
 		for _, segment := range g.snake {
 			if segment.X == bomb.pos.X && segment.Y == bomb.pos.Y {
 				g.gameOver = true
+				g.state = GameOver
 				return
 			}
 		}
@@ -436,6 +477,7 @@ func (g *Game) updateBombs() {
 				}
 				if dx < 3 && dy < 3 {
 					g.gameOver = true
+					g.state = GameOver
 					return
 				}
 			}
@@ -506,6 +548,59 @@ func (g *Game) Draw(screen *ebiten.Image) {
 	// Clear screen
 	screen.Fill(color.RGBA{0, 0, 0, 255})
 
+	// Draw based on game state
+	switch g.state {
+	case Menu:
+		g.drawMenu(screen)
+		return
+	case Paused:
+		// Draw game paused
+		g.drawGame(screen)
+		g.drawPauseOverlay(screen)
+		return
+	case GameOver:
+		// Draw game over
+		g.drawGame(screen)
+		g.drawGameOverOverlay(screen)
+		return
+	case Playing:
+		g.drawGame(screen)
+	}
+}
+
+func (g *Game) drawMenu(screen *ebiten.Image) {
+	// Title
+	title := "SNAKE GAME"
+	titleX := float32(screenWidth/2 - len(title)*10)
+	titleY := float32(screenHeight/2 - 100)
+	ebitenutil.DebugPrintAt(screen, title, int(titleX), int(titleY))
+
+	// Subtitle
+	subtitle := "Go365 Go75 - Ebitengine"
+	subX := float32(screenWidth/2 - len(subtitle)*5)
+	ebitenutil.DebugPrintAt(screen, subtitle, int(subX), int(titleY+40))
+
+	// Start button prompt
+	startText := "Press ENTER or SPACE to Start"
+	startX := float32(screenWidth/2 - len(startText)*6)
+	ebitenutil.DebugPrintAt(screen, startText, int(startX), int(titleY+100))
+
+	// Controls info
+	controls := []string{
+		"Controls:",
+		"Arrow Keys - Move",
+		"SPACE - Shoot Arrow",
+		"P - Pause",
+		"",
+		"Find the golden key and open the treasure chest!",
+		"Collect arrows and shoot the bugs!",
+	}
+	for i, line := range controls {
+		ebitenutil.DebugPrintAt(screen, line, screenWidth/2-150, int(titleY)+160+i*20)
+	}
+}
+
+func (g *Game) drawGame(screen *ebiten.Image) {
 	// Draw border around play area
 	vector.StrokeRect(screen, 0, 0, screenWidth, screenHeight, 2, color.RGBA{100, 100, 100, 255}, false)
 
@@ -574,11 +669,46 @@ func (g *Game) Draw(screen *ebiten.Image) {
 	if g.hasKey {
 		ebitenutil.DebugPrintAt(screen, "KEY!", 10, 40)
 	}
+}
 
-	if g.gameOver {
-		ebitenutil.DebugPrintAt(screen, "GAME OVER! Press ENTER to restart", screenWidth/2-150, screenHeight/2)
-		ebitenutil.DebugPrintAt(screen, fmt.Sprintf("Final Score: %d - Enemies: %d - Bombs: %d", g.score, len(g.enemies), len(g.bombs)), screenWidth/2-150, screenHeight/2+30)
-	}
+func (g *Game) drawPauseOverlay(screen *ebiten.Image) {
+	// Semi-transparent overlay
+	screen.Fill(color.RGBA{0, 0, 0, 128})
+
+	// PAUSED text
+	pausedText := "PAUSED"
+	pausedX := screenWidth/2 - len(pausedText)*8
+	ebitenutil.DebugPrintAt(screen, pausedText, pausedX, screenHeight/2-50)
+
+	// Continue prompt
+	continueText := "Press P to Continue"
+	contX := screenWidth/2 - len(continueText)*6
+	ebitenutil.DebugPrintAt(screen, continueText, contX, screenHeight/2)
+}
+
+func (g *Game) drawGameOverOverlay(screen *ebiten.Image) {
+	// Semi-transparent overlay
+	screen.Fill(color.RGBA{50, 0, 0, 180})
+
+	// GAME OVER text
+	gameOverText := "GAME OVER"
+	gameOverX := screenWidth/2 - len(gameOverText)*8
+	ebitenutil.DebugPrintAt(screen, gameOverText, gameOverX, screenHeight/2-80)
+
+	// Final score
+	scoreText := fmt.Sprintf("Final Score: %d", g.score)
+	scoreX := screenWidth/2 - len(scoreText)*6
+	ebitenutil.DebugPrintAt(screen, scoreText, scoreX, screenHeight/2-20)
+
+	// Enemies killed
+	enemiesText := fmt.Sprintf("Enemies: %d", len(g.enemies))
+	enemiesX := screenWidth/2 - len(enemiesText)*6
+	ebitenutil.DebugPrintAt(screen, enemiesText, enemiesX, screenHeight/2+10)
+
+	// Restart prompt
+	restartText := "Press ENTER to Restart"
+	restartX := screenWidth/2 - len(restartText)*7
+	ebitenutil.DebugPrintAt(screen, restartText, restartX, screenHeight/2+60)
 }
 
 func (g *Game) Layout(outsideWidth, outsideHeight int) (int, int) {
