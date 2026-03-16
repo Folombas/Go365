@@ -460,9 +460,37 @@ func (g *Game) drawEnemy(screen *ebiten.Image, enemy Enemy) {
 	vector.StrokeLine(screen, rightFangX, rightFangY-fangSize/4, rightFangX+fangSize/4, rightFangY+fangSize/4, 2, color.RGBA{230, 230, 230, 255}, false)
 	vector.StrokeLine(screen, rightFangX+fangSize/2, rightFangY-fangSize/4, rightFangX+fangSize/4, rightFangY+fangSize/4, 2, color.RGBA{230, 230, 230, 255}, false)
 
-	// Eyes (yellow dots)
-	vector.DrawFilledCircle(screen, headX-size/8, headY-size/8, 2, color.RGBA{255, 255, 0, 255}, false)
-	vector.DrawFilledCircle(screen, headX+size/8, headY-size/8, 2, color.RGBA{255, 255, 0, 255}, false)
+	// Big scary glowing eyes (red with glow effect)
+	eyeSize := size / 5
+	// Left eye glow (multiple layers for glow effect)
+	leftEyeX := headX - size/6
+	leftEyeY := headY - size/8
+	// Outer glow (red)
+	vector.DrawFilledCircle(screen, leftEyeX, leftEyeY, eyeSize+2, color.RGBA{255, 50, 0, 100}, false)
+	// Middle glow
+	vector.DrawFilledCircle(screen, leftEyeX, leftEyeY, eyeSize, color.RGBA{255, 100, 0, 180}, false)
+	// Inner bright eye
+	vector.DrawFilledCircle(screen, leftEyeX, leftEyeY, eyeSize-2, color.RGBA{255, 0, 0, 255}, false)
+	// Pupil (black)
+	vector.DrawFilledCircle(screen, leftEyeX, leftEyeY, eyeSize/3, color.RGBA{0, 0, 0, 255}, false)
+	// White highlight for scary look
+	vector.DrawFilledCircle(screen, leftEyeX-eyeSize/4, leftEyeY-eyeSize/4, eyeSize/5, color.RGBA{255, 255, 255, 255}, false)
+
+	// Right eye glow (multiple layers for glow effect)
+	rightEyeX := headX + size/6
+	rightEyeY := headY - size/8
+	// Outer glow (red)
+	vector.DrawFilledCircle(screen, rightEyeX, rightEyeY, eyeSize+2, color.RGBA{255, 50, 0, 100}, false)
+	// Middle glow
+	vector.DrawFilledCircle(screen, rightEyeX, rightEyeY, eyeSize, color.RGBA{255, 100, 0, 180}, false)
+	// Inner bright eye
+	vector.DrawFilledCircle(screen, rightEyeX, rightEyeY, eyeSize-2, color.RGBA{255, 0, 0, 255}, false)
+	// Pupil (black)
+	vector.DrawFilledCircle(screen, rightEyeX, rightEyeY, eyeSize/3, color.RGBA{0, 0, 0, 255}, false)
+	// White highlight for scary look
+	vector.DrawFilledCircle(screen, rightEyeX+eyeSize/4, rightEyeY-eyeSize/4, eyeSize/5, color.RGBA{255, 255, 255, 255}, false)
+
+	// Eyes (yellow dots) - removed, now have big red glowing eyes
 }
 
 func (g *Game) drawSnakeEyes(screen *ebiten.Image, head Point, direction Direction) {
