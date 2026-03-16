@@ -439,26 +439,28 @@ func (g *Game) drawEnemy(screen *ebiten.Image, enemy Enemy) {
 	// Right antenna
 	vector.StrokeLine(screen, headX+size/6, headY-size/3, headX+size/2+antennaAngle*size, headY-size/2-antennaAngle*size, 1, color.RGBA{150, 50, 50, 255}, false)
 
-	// Scary fangs/teeth (white sharp triangles on sides of head)
-	fangSize := size / 5
-	// Left fang
-	leftFangX := headX - size/4
-	leftFangY := headY + size/6
-	vector.StrokeLine(screen, leftFangX-fangSize/2, leftFangY-fangSize/2, leftFangX, leftFangY+fangSize/2, 3, color.RGBA{255, 255, 255, 255}, false)
-	vector.StrokeLine(screen, leftFangX+fangSize/2, leftFangY-fangSize/2, leftFangX, leftFangY+fangSize/2, 3, color.RGBA{255, 255, 255, 255}, false)
-	// Right fang
-	rightFangX := headX + size/4
-	rightFangY := headY + size/6
-	vector.StrokeLine(screen, rightFangX-fangSize/2, rightFangY-fangSize/2, rightFangX, rightFangY+fangSize/2, 3, color.RGBA{255, 255, 255, 255}, false)
-	vector.StrokeLine(screen, rightFangX+fangSize/2, rightFangY-fangSize/2, rightFangX, rightFangY+fangSize/2, 3, color.RGBA{255, 255, 255, 255}, false)
+	// Menacing mouth with two front teeth
+	mouthX := headX
+	mouthY := headY + size/8
 
-	// Additional smaller fangs (inner teeth)
-	// Left small fang
-	vector.StrokeLine(screen, leftFangX-fangSize/2, leftFangY-fangSize/4, leftFangX-fangSize/4, leftFangY+fangSize/4, 2, color.RGBA{230, 230, 230, 255}, false)
-	vector.StrokeLine(screen, leftFangX, leftFangY-fangSize/4, leftFangX-fangSize/4, leftFangY+fangSize/4, 2, color.RGBA{230, 230, 230, 255}, false)
-	// Right small fang
-	vector.StrokeLine(screen, rightFangX, rightFangY-fangSize/4, rightFangX+fangSize/4, rightFangY+fangSize/4, 2, color.RGBA{230, 230, 230, 255}, false)
-	vector.StrokeLine(screen, rightFangX+fangSize/2, rightFangY-fangSize/4, rightFangX+fangSize/4, rightFangY+fangSize/4, 2, color.RGBA{230, 230, 230, 255}, false)
+	// Dark mouth opening (semi-circle)
+	vector.DrawFilledCircle(screen, mouthX, mouthY+size/12, size/6, color.RGBA{50, 0, 0, 255}, false)
+
+	// Two prominent front teeth (white rectangles)
+	toothWidth := size / 10
+	toothHeight := size / 8
+
+	// Left front tooth
+	vector.DrawFilledRect(screen,
+		mouthX-toothWidth/2, mouthY-toothHeight/2,
+		toothWidth, toothHeight,
+		color.RGBA{255, 255, 255, 255}, false)
+
+	// Right front tooth
+	vector.DrawFilledRect(screen,
+		mouthX+toothWidth/2-toothWidth/4, mouthY-toothHeight/2,
+		toothWidth, toothHeight,
+		color.RGBA{255, 255, 255, 255}, false)
 
 	// Big scary glowing eyes (red with glow effect)
 	eyeSize := size / 5
