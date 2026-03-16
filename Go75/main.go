@@ -15,8 +15,8 @@ import (
 
 const (
 	tileSize     = 20
-	screenWidth  = 2560
-	screenHeight = 1440
+	screenWidth  = 800
+	screenHeight = 600
 	gridSizeX    = screenWidth / tileSize
 	gridSizeY    = screenHeight / tileSize
 )
