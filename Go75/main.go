@@ -338,6 +338,9 @@ func (g *Game) Draw(screen *ebiten.Image) {
 	// Clear screen
 	screen.Fill(color.RGBA{0, 0, 0, 255})
 
+	// Draw border around play area
+	vector.StrokeRect(screen, 0, 0, screenWidth, screenHeight, 2, color.RGBA{100, 100, 100, 255}, false)
+
 	// Draw snake
 	for i, segment := range g.snake {
 		green := color.RGBA{0, 255, 0, 255}
