@@ -44,6 +44,12 @@ type Game struct {
 	bombs       []Bomb
 	bombTimer   int
 	bombDelay   int // время спавна бомб
+	chest       *TreasureChest
+	key         *Key
+	arrows      []Arrow
+	hasKey      bool
+	arrowCount  int
+	shootTimer  int
 }
 
 type Point struct {
@@ -63,6 +69,23 @@ type Bomb struct {
 	maxTime  int // время до взрыва
 }
 
+type TreasureChest struct {
+	pos    Point
+	open   bool
+	arrows int // количество стрел в сундуке
+}
+
+type Key struct {
+	pos Point
+}
+
+type Arrow struct {
+	pos       Point
+	direction Direction
+	active    bool
+	speed     int
+}
+
 func NewGame() *Game {
 	g := &Game{
 		snake:     []Point{{gridSizeX / 2, gridSizeY / 2}, {gridSizeX/2 - 1, gridSizeY / 2}, {gridSizeX/2 - 2, gridSizeY / 2}},
@@ -74,8 +97,13 @@ func NewGame() *Game {
 		bombDelay: 180,  // спавн бомбы каждые 180 тиков (~3 сек)
 		enemies:   []Enemy{},
 		bombs:     []Bomb{},
+		arrows:    []Arrow{},
+		hasKey:    false,
+		arrowCount: 0,
 	}
 	g.placeFood()
+	g.spawnChest()
+	g.spawnKey()
 	// Spawn 10 enemies at start
 	for i := 0; i < 10; i++ {
 		g.spawnEnemy()
@@ -165,6 +193,66 @@ func (g *Game) spawnBomb() {
 	}
 }
 
+func (g *Game) spawnChest() {
+	rand.Seed(time.Now().UnixNano())
+	for {
+		pos := Point{
+			X: rand.Intn(gridSizeX),
+			Y: rand.Intn(gridSizeY),
+		}
+		// Don't spawn too close to snake
+		tooClose := false
+		for _, segment := range g.snake {
+			dx := segment.X - pos.X
+			if dx < 0 {
+				dx = -dx
+			}
+			dy := segment.Y - pos.Y
+			if dy < 0 {
+				dy = -dy
+			}
+			if dx < 20 && dy < 15 {
+				tooClose = true
+				break
+			}
+		}
+		if !tooClose {
+			g.chest = &TreasureChest{pos: pos, open: false, arrows: 5}
+			break
+		}
+	}
+}
+
+func (g *Game) spawnKey() {
+	rand.Seed(time.Now().UnixNano())
+	for {
+		pos := Point{
+			X: rand.Intn(gridSizeX),
+			Y: rand.Intn(gridSizeY),
+		}
+		// Don't spawn too close to snake
+		tooClose := false
+		for _, segment := range g.snake {
+			dx := segment.X - pos.X
+			if dx < 0 {
+				dx = -dx
+			}
+			dy := segment.Y - pos.Y
+			if dy < 0 {
+				dy = -dy
+			}
+			if dx < 20 && dy < 15 {
+				tooClose = true
+				break
+			}
+		}
+		if !tooClose {
+			g.key = &Key{pos: pos}
+			break
+		}
+	}
+}
+
 func (g *Game) Update() error {
 	if g.gameOver {
 		// Press Enter to restart
@@ -183,6 +271,11 @@ func (g *Game) Update() error {
 		g.direction = Left
 	} else if inpututil.IsKeyJustPressed(ebiten.KeyArrowRight) && g.direction != Left {
 		g.direction = Right
+	}
+
+	// Shoot arrow with Space key
+	if inpututil.IsKeyJustPressed(ebiten.KeySpace) && g.arrowCount > 0 {
+		g.shootArrow()
 	}
 
 	// Update move timer
@@ -253,6 +346,24 @@ func (g *Game) Update() error {
 
 	// Update bombs
 	g.updateBombs()
+
+	// Check key collision
+	if g.key != nil && newHead.X == g.key.pos.X && newHead.Y == g.key.pos.Y {
+		g.hasKey = true
+		g.key = nil
+	}
+
+	// Check chest collision
+	if g.chest != nil && !g.chest.open && newHead.X == g.chest.pos.X && newHead.Y == g.chest.pos.Y {
+		if g.hasKey {
+			g.chest.open = true
+			g.arrowCount += g.chest.arrows
+			g.hasKey = false
+		}
+	}
+
+	// Update arrows
+	g.updateArrows()
 
 	return nil
 }
@@ -334,6 +445,63 @@ func (g *Game) updateBombs() {
 	}
 }
 
+func (g *Game) shootArrow() {
+	head := g.snake[0]
+	arrow := Arrow{
+		pos:       head,
+		direction: g.direction,
+		active:    true,
+		speed:     0,
+	}
+	g.arrows = append(g.arrows, arrow)
+	g.arrowCount--
+}
+
+func (g *Game) updateArrows() {
+	for i := len(g.arrows) - 1; i >= 0; i-- {
+		arrow := &g.arrows[i]
+		if !arrow.active {
+			g.arrows = append(g.arrows[:i], g.arrows[i+1:]...)
+			continue
+		}
+
+		arrow.speed++
+		if arrow.speed < 3 {
+			continue
+		}
+		arrow.speed = 0
+
+		// Move arrow
+		switch arrow.direction {
+		case Up:
+			arrow.pos.Y--
+		case Down:
+			arrow.pos.Y++
+		case Left:
+			arrow.pos.X--
+		case Right:
+			arrow.pos.X++
+		}
+
+		// Check bounds
+		if arrow.pos.X < 0 || arrow.pos.X >= gridSizeX || arrow.pos.Y < 0 || arrow.pos.Y >= gridSizeY {
+			arrow.active = false
+			continue
+		}
+
+		// Check collision with enemies
+		for j := len(g.enemies) - 1; j >= 0; j-- {
+			enemy := &g.enemies[j]
+			if arrow.pos.X == enemy.pos.X && arrow.pos.Y == enemy.pos.Y {
+				g.enemies = append(g.enemies[:j], g.enemies[j+1:]...)
+				arrow.active = false
+				g.score += 1 // Bonus for killing enemy
+				break
+			}
+		}
+	}
+}
+
 func (g *Game) Draw(screen *ebiten.Image) {
 	// Clear screen
 	screen.Fill(color.RGBA{0, 0, 0, 255})
@@ -385,8 +553,27 @@ func (g *Game) Draw(screen *ebiten.Image) {
 		g.drawBomb(screen, bomb)
 	}
 
+	// Draw treasure chest
+	if g.chest != nil {
+		g.drawChest(screen, *g.chest)
+	}
+
+	// Draw key
+	if g.key != nil {
+		g.drawKey(screen, *g.key)
+	}
+
+	// Draw arrows
+	for _, arrow := range g.arrows {
+		g.drawArrow(screen, arrow)
+	}
+
 	// Draw score
 	ebitenutil.DebugPrintAt(screen, "Score: "+string(rune('0'+g.score)), 10, 10)
+	ebitenutil.DebugPrintAt(screen, fmt.Sprintf("Arrows: %d", g.arrowCount), 10, 25)
+	if g.hasKey {
+		ebitenutil.DebugPrintAt(screen, "KEY!", 10, 40)
+	}
 
 	if g.gameOver {
 		ebitenutil.DebugPrintAt(screen, "GAME OVER! Press ENTER to restart", screenWidth/2-150, screenHeight/2)
@@ -628,6 +815,137 @@ func (g *Game) drawBomb(screen *ebiten.Image, bomb Bomb) {
 		particleY := fuseY - size/3 + float32(rand.Intn(8)-4)
 		vector.DrawFilledCircle(screen, particleX, particleY, 1, color.RGBA{255, 100, 0, 255}, false)
 	}
+}
+
+func (g *Game) drawChest(screen *ebiten.Image, chest TreasureChest) {
+	x := float32(chest.pos.X * tileSize)
+	y := float32(chest.pos.Y * tileSize)
+	size := float32(tileSize)
+
+	// Chest body (brown rectangle)
+	chestColor := color.RGBA{139, 69, 19, 255}
+	if chest.open {
+		chestColor = color.RGBA{100, 50, 10, 255} // Darker when open
+	}
+	vector.DrawFilledRect(screen, x+2, y+4, size-4, size-6, chestColor, false)
+
+	// Chest lid (gold trim)
+	lidColor := color.RGBA{255, 215, 0, 255}
+	if chest.open {
+		// Open lid - draw it tilted up
+		vector.StrokeLine(screen, x+2, y+4, x+size-2, y+4, 2, lidColor, false)
+	} else {
+		// Closed lid - draw rounded top
+		vector.DrawFilledRect(screen, x+2, y+2, size-4, size/3, lidColor, false)
+	}
+
+	// Lock (gold circle in center)
+	if !chest.open {
+		vector.DrawFilledCircle(screen, x+size/2, y+size/2, 3, color.RGBA{255, 215, 0, 255}, false)
+	}
+}
+
+func (g *Game) drawKey(screen *ebiten.Image, key Key) {
+	x := float32(key.pos.X * tileSize)
+	y := float32(key.pos.Y * tileSize)
+	size := float32(tileSize)
+
+	// Key color (gold)
+	keyColor := color.RGBA{255, 215, 0, 255}
+
+	// Key head (circle)
+	headSize := size / 3
+	vector.DrawFilledCircle(screen, x+size/2, y+size/3, headSize, keyColor, false)
+
+	// Key shaft (rectangle)
+	shaftWidth := size / 8
+	shaftHeight := size / 2
+	vector.DrawFilledRect(screen, x+size/2-shaftWidth/2, y+size/2, shaftWidth, shaftHeight, keyColor, false)
+
+	// Key teeth (two notches at bottom)
+	toothSize := size / 6
+	vector.DrawFilledRect(screen, x+size/2-shaftWidth/2, y+size/2+shaftHeight-toothSize, shaftWidth, toothSize, keyColor, false)
+	vector.DrawFilledRect(screen, x+size/2, y+size/2+shaftHeight-toothSize, shaftWidth, toothSize/2, keyColor, false)
+}
+
+func (g *Game) drawArrow(screen *ebiten.Image, arrow Arrow) {
+	x := float32(arrow.pos.X * tileSize)
+	y := float32(arrow.pos.Y * tileSize)
+	size := float32(tileSize)
+
+	// Arrow color (silver/gray)
+	arrowColor := color.RGBA{192, 192, 192, 255}
+
+	// Arrow shaft (line in direction of travel)
+	shaftLength := size / 2
+	shaftWidth := float32(2)
+
+	var startX, startY, endX, endY float32
+
+	switch arrow.direction {
+	case Up:
+		startX = x + size/2
+		startY = y + size/2
+		endX = x + size/2
+		endY = y + size/2 - shaftLength
+	case Down:
+		startX = x + size/2
+		startY = y + size/2
+		endX = x + size/2
+		endY = y + size/2 + shaftLength
+	case Left:
+		startX = x + size/2
+		startY = y + size/2
+		endX = x + size/2 - shaftLength
+		endY = y + size/2
+	case Right:
+		startX = x + size/2
+		startY = y + size/2
+		endX = x + size/2 + shaftLength
+		endY = y + size/2
+	}
+
+	vector.StrokeLine(screen, startX, startY, endX, endY, shaftWidth, arrowColor, false)
+
+	// Arrow head (triangle at front)
+	headSize := size / 6
+	var headX1, headY1, headX2, headY2, headX3, headY3 float32
+
+	switch arrow.direction {
+	case Up:
+		headX1 = endX
+		headY1 = endY
+		headX2 = endX - headSize/2
+		headY2 = endY + headSize
+		headX3 = endX + headSize/2
+		headY3 = endY + headSize
+	case Down:
+		headX1 = endX
+		headY1 = endY
+		headX2 = endX - headSize/2
+		headY2 = endY - headSize
+		headX3 = endX + headSize/2
+		headY3 = endY - headSize
+	case Left:
+		headX1 = endX
+		headY1 = endY
+		headX2 = endX + headSize
+		headY2 = endY - headSize/2
+		headX3 = endX + headSize
+		headY3 = endY + headSize/2
+	case Right:
+		headX1 = endX
+		headY1 = endY
+		headX2 = endX - headSize
+		headY2 = endY - headSize/2
+		headX3 = endX - headSize
+		headY3 = endY + headSize/2
+	}
+
+	// Draw arrow head as triangle outline
+	vector.StrokeLine(screen, headX1, headY1, headX2, headY2, shaftWidth, arrowColor, false)
+	vector.StrokeLine(screen, headX2, headY2, headX3, headY3, shaftWidth, arrowColor, false)
+	vector.StrokeLine(screen, headX3, headY3, headX1, headY1, shaftWidth, arrowColor, false)
 }
 
 func main() {
