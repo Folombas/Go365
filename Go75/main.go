@@ -436,6 +436,27 @@ func (g *Game) drawEnemy(screen *ebiten.Image, enemy Enemy) {
 	// Right antenna
 	vector.StrokeLine(screen, headX+size/6, headY-size/3, headX+size/2+antennaAngle*size, headY-size/2-antennaAngle*size, 1, color.RGBA{150, 50, 50, 255}, false)
 
+	// Scary fangs/teeth (white sharp triangles on sides of head)
+	fangSize := size / 5
+	// Left fang
+	leftFangX := headX - size/4
+	leftFangY := headY + size/6
+	vector.StrokeLine(screen, leftFangX-fangSize/2, leftFangY-fangSize/2, leftFangX, leftFangY+fangSize/2, 3, color.RGBA{255, 255, 255, 255}, false)
+	vector.StrokeLine(screen, leftFangX+fangSize/2, leftFangY-fangSize/2, leftFangX, leftFangY+fangSize/2, 3, color.RGBA{255, 255, 255, 255}, false)
+	// Right fang
+	rightFangX := headX + size/4
+	rightFangY := headY + size/6
+	vector.StrokeLine(screen, rightFangX-fangSize/2, rightFangY-fangSize/2, rightFangX, rightFangY+fangSize/2, 3, color.RGBA{255, 255, 255, 255}, false)
+	vector.StrokeLine(screen, rightFangX+fangSize/2, rightFangY-fangSize/2, rightFangX, rightFangY+fangSize/2, 3, color.RGBA{255, 255, 255, 255}, false)
+
+	// Additional smaller fangs (inner teeth)
+	// Left small fang
+	vector.StrokeLine(screen, leftFangX-fangSize/2, leftFangY-fangSize/4, leftFangX-fangSize/4, leftFangY+fangSize/4, 2, color.RGBA{230, 230, 230, 255}, false)
+	vector.StrokeLine(screen, leftFangX, leftFangY-fangSize/4, leftFangX-fangSize/4, leftFangY+fangSize/4, 2, color.RGBA{230, 230, 230, 255}, false)
+	// Right small fang
+	vector.StrokeLine(screen, rightFangX, rightFangY-fangSize/4, rightFangX+fangSize/4, rightFangY+fangSize/4, 2, color.RGBA{230, 230, 230, 255}, false)
+	vector.StrokeLine(screen, rightFangX+fangSize/2, rightFangY-fangSize/4, rightFangX+fangSize/4, rightFangY+fangSize/4, 2, color.RGBA{230, 230, 230, 255}, false)
+
 	// Eyes (yellow dots)
 	vector.DrawFilledCircle(screen, headX-size/8, headY-size/8, 2, color.RGBA{255, 255, 0, 255}, false)
 	vector.DrawFilledCircle(screen, headX+size/8, headY-size/8, 2, color.RGBA{255, 255, 0, 255}, false)
