@@ -267,6 +267,10 @@ func (g *Game) Draw(screen *ebiten.Image) {
 			green,
 			false,
 		)
+		// Draw eyes on head
+		if i == 0 {
+			g.drawSnakeEyes(screen, segment, g.direction)
+		}
 	}
 
 	// Draw food
@@ -343,6 +347,48 @@ func (g *Game) drawEnemy(screen *ebiten.Image, enemy Enemy) {
 	// Eyes (yellow dots)
 	vector.DrawFilledCircle(screen, headX-size/8, headY-size/8, 2, color.RGBA{255, 255, 0, 255}, false)
 	vector.DrawFilledCircle(screen, headX+size/8, headY-size/8, 2, color.RGBA{255, 255, 0, 255}, false)
+}
+
+func (g *Game) drawSnakeEyes(screen *ebiten.Image, head Point, direction Direction) {
+	x := float32(head.X * tileSize)
+	y := float32(head.Y * tileSize)
+	size := float32(tileSize)
+	eyeSize := size / 6
+	pupilSize := eyeSize / 2
+
+	// Eye positions based on direction
+	var leftEyeX, leftEyeY, rightEyeX, rightEyeY float32
+
+	switch direction {
+	case Up:
+		leftEyeX = x + size/3
+		leftEyeY = y + size/3
+		rightEyeX = x + 2*size/3
+		rightEyeY = y + size/3
+	case Down:
+		leftEyeX = x + size/3
+		leftEyeY = y + 2*size/3
+		rightEyeX = x + 2*size/3
+		rightEyeY = y + 2*size/3
+	case Left:
+		leftEyeX = x + size/3
+		leftEyeY = y + size/3
+		rightEyeX = x + size/3
+		rightEyeY = y + 2*size/3
+	case Right:
+		leftEyeX = x + 2*size/3
+		leftEyeY = y + size/3
+		rightEyeX = x + 2*size/3
+		rightEyeY = y + 2*size/3
+	}
+
+	// Draw whites of eyes
+	vector.DrawFilledCircle(screen, leftEyeX, leftEyeY, eyeSize, color.RGBA{255, 255, 255, 255}, false)
+	vector.DrawFilledCircle(screen, rightEyeX, rightEyeY, eyeSize, color.RGBA{255, 255, 255, 255}, false)
+
+	// Draw pupils (black)
+	vector.DrawFilledCircle(screen, leftEyeX, leftEyeY, pupilSize, color.RGBA{0, 0, 0, 255}, false)
+	vector.DrawFilledCircle(screen, rightEyeX, rightEyeY, pupilSize, color.RGBA{0, 0, 0, 255}, false)
 }
 
 func main() {
