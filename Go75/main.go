@@ -13,7 +13,7 @@ import (
 )
 
 const (
-	gridSize     = 20
+	gridSize     = 30
 	tileSize     = 20
 	screenWidth  = gridSize * tileSize
 	screenHeight = gridSize * tileSize
@@ -45,7 +45,7 @@ type Point struct {
 
 func NewGame() *Game {
 	g := &Game{
-		snake:     []Point{{5, 5}, {4, 5}, {3, 5}},
+		snake:     []Point{{10, 10}, {9, 10}, {8, 10}},
 		direction: Right,
 		score:     0,
 		gameOver:  false,
