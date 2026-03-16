@@ -29,11 +29,13 @@ const (
 )
 
 type Game struct {
-	snake      []Point
-	direction  Direction
-	food       Point
-	score      int
-	gameOver   bool
+	snake       []Point
+	direction   Direction
+	food        Point
+	score       int
+	gameOver    bool
+	moveTimer   int
+	moveDelay   int // тиков между движениями (60 тиков = 1 сек)
 }
 
 type Point struct {
@@ -47,6 +49,7 @@ func NewGame() *Game {
 		direction: Right,
 		score:     0,
 		gameOver:  false,
+		moveDelay: 8, // скорость движения (меньше = быстрее)
 	}
 	g.placeFood()
 	return g
@@ -92,6 +95,13 @@ func (g *Game) Update() error {
 	} else if inpututil.IsKeyJustPressed(ebiten.KeyArrowRight) && g.direction != Left {
 		g.direction = Right
 	}
+
+	// Update move timer
+	g.moveTimer++
+	if g.moveTimer < g.moveDelay {
+		return nil
+	}
+	g.moveTimer = 0
 
 	// Move snake
 	head := g.snake[0]
