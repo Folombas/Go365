@@ -13,10 +13,11 @@ import (
 )
 
 const (
-	gridSize     = 30
 	tileSize     = 20
-	screenWidth  = gridSize * tileSize
-	screenHeight = gridSize * tileSize
+	screenWidth  = 2560
+	screenHeight = 1440
+	gridSizeX    = screenWidth / tileSize
+	gridSizeY    = screenHeight / tileSize
 )
 
 type Direction int
@@ -45,7 +46,7 @@ type Point struct {
 
 func NewGame() *Game {
 	g := &Game{
-		snake:     []Point{{10, 10}, {9, 10}, {8, 10}},
+		snake:     []Point{{gridSizeX / 2, gridSizeY / 2}, {gridSizeX/2 - 1, gridSizeY / 2}, {gridSizeX/2 - 2, gridSizeY / 2}},
 		direction: Right,
 		score:     0,
 		gameOver:  false,
@@ -59,8 +60,8 @@ func (g *Game) placeFood() {
 	rand.Seed(time.Now().UnixNano())
 	for {
 		g.food = Point{
-			X: rand.Intn(gridSize),
-			Y: rand.Intn(gridSize),
+			X: rand.Intn(gridSizeX),
+			Y: rand.Intn(gridSizeY),
 		}
 		// Check if food is not on snake
 		onSnake := false
@@ -119,7 +120,7 @@ func (g *Game) Update() error {
 	}
 
 	// Check wall collision
-	if newHead.X < 0 || newHead.X >= gridSize || newHead.Y < 0 || newHead.Y >= gridSize {
+	if newHead.X < 0 || newHead.X >= gridSizeX || newHead.Y < 0 || newHead.Y >= gridSizeY {
 		g.gameOver = true
 		return nil
 	}
@@ -184,7 +185,7 @@ func (g *Game) Draw(screen *ebiten.Image) {
 	ebitenutil.DebugPrintAt(screen, "Score: "+string(rune('0'+g.score)), 10, 10)
 
 	if g.gameOver {
-		ebitenutil.DebugPrintAt(screen, "GAME OVER! Press ENTER to restart", screenWidth/2-100, screenHeight/2)
+		ebitenutil.DebugPrintAt(screen, "GAME OVER! Press ENTER to restart", screenWidth/2-150, screenHeight/2)
 	}
 }
 
