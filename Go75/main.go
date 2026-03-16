@@ -360,6 +360,7 @@ func (g *Game) Draw(screen *ebiten.Image) {
 		// Draw eyes on head
 		if i == 0 {
 			g.drawSnakeEyes(screen, segment, g.direction)
+			g.drawSnakeTongue(screen, segment, g.direction)
 		}
 	}
 
@@ -519,6 +520,79 @@ func (g *Game) drawSnakeEyes(screen *ebiten.Image, head Point, direction Directi
 	// Draw pupils (black)
 	vector.DrawFilledCircle(screen, leftEyeX, leftEyeY, pupilSize, color.RGBA{0, 0, 0, 255}, false)
 	vector.DrawFilledCircle(screen, rightEyeX, rightEyeY, pupilSize, color.RGBA{0, 0, 0, 255}, false)
+}
+
+func (g *Game) drawSnakeTongue(screen *ebiten.Image, head Point, direction Direction) {
+	x := float32(head.X * tileSize)
+	y := float32(head.Y * tileSize)
+	size := float32(tileSize)
+
+	// Tongue color (red/pink)
+	tongueColor := color.RGBA{255, 50, 50, 255}
+
+	// Tongue dimensions
+	tongueLength := size / 2
+	tongueWidth := size / 12
+
+	// Calculate tongue start and end based on direction
+	var startX, startY, endX, endY float32
+
+	switch direction {
+	case Up:
+		startX = x + size/2
+		startY = y + size/4
+		endX = x + size/2
+		endY = y - tongueLength
+	case Down:
+		startX = x + size/2
+		startY = y + 3*size/4
+		endX = x + size/2
+		endY = y + size + tongueLength
+	case Left:
+		startX = x + size/4
+		startY = y + size/2
+		endX = x - tongueLength
+		endY = y + size/2
+	case Right:
+		startX = x + 3*size/4
+		startY = y + size/2
+		endX = x + size + tongueLength
+		endY = y + size/2
+	}
+
+	// Draw tongue (thin line)
+	vector.StrokeLine(screen, startX, startY, endX, endY, tongueWidth, tongueColor, false)
+
+	// Forked tongue (two prongs)
+	forkLength := size / 6
+	var leftForkX, leftForkY, rightForkX, rightForkY float32
+
+	switch direction {
+	case Up:
+		leftForkX = endX - forkLength/2
+		leftForkY = endY + forkLength/2
+		rightForkX = endX + forkLength/2
+		rightForkY = endY + forkLength/2
+	case Down:
+		leftForkX = endX - forkLength/2
+		leftForkY = endY - forkLength/2
+		rightForkX = endX + forkLength/2
+		rightForkY = endY - forkLength/2
+	case Left:
+		leftForkX = endX + forkLength/2
+		leftForkY = endY - forkLength/2
+		rightForkX = endX + forkLength/2
+		rightForkY = endY + forkLength/2
+	case Right:
+		leftForkX = endX - forkLength/2
+		leftForkY = endY - forkLength/2
+		rightForkX = endX - forkLength/2
+		rightForkY = endY + forkLength/2
+	}
+
+	// Draw fork prongs
+	vector.StrokeLine(screen, endX, endY, leftForkX, leftForkY, tongueWidth, tongueColor, false)
+	vector.StrokeLine(screen, endX, endY, rightForkX, rightForkY, tongueWidth, tongueColor, false)
 }
 
 func (g *Game) drawBomb(screen *ebiten.Image, bomb Bomb) {
