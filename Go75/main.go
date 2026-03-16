@@ -443,24 +443,8 @@ func (g *Game) drawEnemy(screen *ebiten.Image, enemy Enemy) {
 	mouthX := headX
 	mouthY := headY + size/8
 
-	// Dark mouth opening (semi-circle)
-	vector.DrawFilledCircle(screen, mouthX, mouthY+size/12, size/6, color.RGBA{50, 0, 0, 255}, false)
-
-	// Two prominent front teeth (white rectangles)
-	toothWidth := size / 10
-	toothHeight := size / 8
-
-	// Left front tooth
-	vector.DrawFilledRect(screen,
-		mouthX-toothWidth/2, mouthY-toothHeight/2,
-		toothWidth, toothHeight,
-		color.RGBA{255, 255, 255, 255}, false)
-
-	// Right front tooth
-	vector.DrawFilledRect(screen,
-		mouthX+toothWidth/2-toothWidth/4, mouthY-toothHeight/2,
-		toothWidth, toothHeight,
-		color.RGBA{255, 255, 255, 255}, false)
+	// Dark mouth opening (circle)
+	vector.DrawFilledCircle(screen, mouthX, mouthY, size/8, color.RGBA{50, 0, 0, 255}, false)
 
 	// Big scary glowing eyes (red with glow effect)
 	eyeSize := size / 5
