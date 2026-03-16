@@ -41,6 +41,9 @@ type Game struct {
 	enemies     []Enemy
 	enemyTimer  int
 	enemyDelay  int // скорость врагов
+	bombs       []Bomb
+	bombTimer   int
+	bombDelay   int // время спавна бомб
 }
 
 type Point struct {
@@ -54,15 +57,23 @@ type Enemy struct {
 	animFrame int
 }
 
+type Bomb struct {
+	pos      Point
+	timer    int
+	maxTime  int // время до взрыва
+}
+
 func NewGame() *Game {
 	g := &Game{
 		snake:     []Point{{gridSizeX / 2, gridSizeY / 2}, {gridSizeX/2 - 1, gridSizeY / 2}, {gridSizeX/2 - 2, gridSizeY / 2}},
 		direction: Right,
 		score:     0,
 		gameOver:  false,
-		moveDelay: 8,  // скорость движения змейки
-		enemyDelay: 12, // скорость врагов (медленнее змейки)
+		moveDelay: 8,   // скорость движения змейки
+		enemyDelay: 12,  // скорость врагов (медленнее змейки)
+		bombDelay: 180,  // спавн бомбы каждые 180 тиков (~3 сек)
 		enemies:   []Enemy{},
+		bombs:     []Bomb{},
 	}
 	g.placeFood()
 	// Spawn 10 enemies at start
@@ -119,6 +130,36 @@ func (g *Game) spawnEnemy() {
 		if !tooClose {
 			dir := Direction(rand.Intn(4))
 			g.enemies = append(g.enemies, Enemy{pos: pos, direction: dir, animFrame: 0})
+			break
+		}
+	}
+}
+
+func (g *Game) spawnBomb() {
+	rand.Seed(time.Now().UnixNano())
+	for {
+		pos := Point{
+			X: rand.Intn(gridSizeX),
+			Y: rand.Intn(gridSizeY),
+		}
+		// Don't spawn on snake
+		tooClose := false
+		for _, segment := range g.snake {
+			dx := segment.X - pos.X
+			if dx < 0 {
+				dx = -dx
+			}
+			dy := segment.Y - pos.Y
+			if dy < 0 {
+				dy = -dy
+			}
+			if dx < 15 && dy < 10 {
+				tooClose = true
+				break
+			}
+		}
+		if !tooClose {
+			g.bombs = append(g.bombs, Bomb{pos: pos, timer: 0, maxTime: 180}) // 3 секунды до взрыва
 			break
 		}
 	}
@@ -203,6 +244,16 @@ func (g *Game) Update() error {
 		g.updateEnemies()
 	}
 
+	// Spawn bombs periodically
+	g.bombTimer++
+	if g.bombTimer >= g.bombDelay {
+		g.bombTimer = 0
+		g.spawnBomb()
+	}
+
+	// Update bombs
+	g.updateBombs()
+
 	return nil
 }
 
@@ -243,6 +294,42 @@ func (g *Game) updateEnemies() {
 				g.gameOver = true
 				return
 			}
+		}
+	}
+}
+
+func (g *Game) updateBombs() {
+	for i := len(g.bombs) - 1; i >= 0; i-- {
+		bomb := &g.bombs[i]
+		bomb.timer++
+
+		// Check collision with snake
+		for _, segment := range g.snake {
+			if segment.X == bomb.pos.X && segment.Y == bomb.pos.Y {
+				g.gameOver = true
+				return
+			}
+		}
+
+		// Bomb explodes after maxTime
+		if bomb.timer >= bomb.maxTime {
+			// Check if snake is near explosion
+			for _, segment := range g.snake {
+				dx := segment.X - bomb.pos.X
+				if dx < 0 {
+					dx = -dx
+				}
+				dy := segment.Y - bomb.pos.Y
+				if dy < 0 {
+					dy = -dy
+				}
+				if dx < 3 && dy < 3 {
+					g.gameOver = true
+					return
+				}
+			}
+			// Remove exploded bomb
+			g.bombs = append(g.bombs[:i], g.bombs[i+1:]...)
 		}
 	}
 }
@@ -289,12 +376,17 @@ func (g *Game) Draw(screen *ebiten.Image) {
 		g.drawEnemy(screen, enemy)
 	}
 
+	// Draw bombs
+	for _, bomb := range g.bombs {
+		g.drawBomb(screen, bomb)
+	}
+
 	// Draw score
 	ebitenutil.DebugPrintAt(screen, "Score: "+string(rune('0'+g.score)), 10, 10)
 
 	if g.gameOver {
 		ebitenutil.DebugPrintAt(screen, "GAME OVER! Press ENTER to restart", screenWidth/2-150, screenHeight/2)
-		ebitenutil.DebugPrintAt(screen, fmt.Sprintf("Final Score: %d - Enemies: %d", g.score, len(g.enemies)), screenWidth/2-120, screenHeight/2+30)
+		ebitenutil.DebugPrintAt(screen, fmt.Sprintf("Final Score: %d - Enemies: %d - Bombs: %d", g.score, len(g.enemies), len(g.bombs)), screenWidth/2-150, screenHeight/2+30)
 	}
 }
 
@@ -389,6 +481,41 @@ func (g *Game) drawSnakeEyes(screen *ebiten.Image, head Point, direction Directi
 	// Draw pupils (black)
 	vector.DrawFilledCircle(screen, leftEyeX, leftEyeY, pupilSize, color.RGBA{0, 0, 0, 255}, false)
 	vector.DrawFilledCircle(screen, rightEyeX, rightEyeY, pupilSize, color.RGBA{0, 0, 0, 255}, false)
+}
+
+func (g *Game) drawBomb(screen *ebiten.Image, bomb Bomb) {
+	x := float32(bomb.pos.X * tileSize)
+	y := float32(bomb.pos.Y * tileSize)
+	size := float32(tileSize)
+
+	// Bomb body (black circle)
+	vector.DrawFilledCircle(screen, x+size/2, y+size/2, size/2-2, color.RGBA{0, 0, 0, 255}, false)
+
+	// Shine on bomb
+	vector.DrawFilledCircle(screen, x+size/3, y+size/3, size/6, color.RGBA{50, 50, 50, 255}, false)
+
+	// Fuse (brown stick)
+	fuseX := x + size/2
+	fuseY := y + size/4
+	vector.StrokeLine(screen, fuseX, fuseY, fuseX, fuseY-size/3, 2, color.RGBA{139, 69, 19, 255}, false)
+
+	// Spark at end of fuse (animated - blinking)
+	sparkPhase := (bomb.timer % 10) / 5.0
+	sparkSize := size/6 + float32(sparkPhase)*size/8
+
+	// Yellow/orange spark glow
+	vector.DrawFilledCircle(screen, fuseX, fuseY-size/3, sparkSize, color.RGBA{255, 200, 0, 200}, false)
+
+	// White hot center
+	vector.DrawFilledCircle(screen, fuseX, fuseY-size/3, sparkSize/2, color.RGBA{255, 255, 255, 255}, false)
+
+	// Spark particles (random sparks around)
+	rand.Seed(time.Now().UnixNano())
+	for i := 0; i < 3; i++ {
+		particleX := fuseX + float32(rand.Intn(8)-4)
+		particleY := fuseY - size/3 + float32(rand.Intn(8)-4)
+		vector.DrawFilledCircle(screen, particleX, particleY, 1, color.RGBA{255, 100, 0, 255}, false)
+	}
 }
 
 func main() {
