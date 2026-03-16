@@ -65,7 +65,10 @@ func NewGame() *Game {
 		enemies:   []Enemy{},
 	}
 	g.placeFood()
-	g.spawnEnemy()
+	// Spawn 10 enemies at start
+	for i := 0; i < 10; i++ {
+		g.spawnEnemy()
+	}
 	return g
 }
 
@@ -298,7 +301,7 @@ func (g *Game) Layout(outsideWidth, outsideHeight int) (int, int) {
 func (g *Game) drawEnemy(screen *ebiten.Image, enemy Enemy) {
 	x := float32(enemy.pos.X * tileSize)
 	y := float32(enemy.pos.Y * tileSize)
-	size := float32(tileSize)
+	size := float32(tileSize) * 1.5 // Increase bug size by 1.5x
 
 	// Body (dark purple oval)
 	vector.DrawFilledCircle(screen, x+size/2, y+size/2, size/2-2, color.RGBA{128, 0, 128, 255}, false)
