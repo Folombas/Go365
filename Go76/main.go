@@ -90,6 +90,9 @@ type Game struct {
 	bombDelay   int // время спавна бомб
 	chest       *TreasureChest
 	key         *Key
+	coins       []Coin
+	coinTimer   int
+	coinDelay   int // время спавна монет
 	arrows      []Arrow
 	hasKey      bool
 	arrowCount  int
@@ -125,6 +128,12 @@ type Key struct {
 	pos Point
 }
 
+type Coin struct {
+	pos      Point
+	value    int // множитель очков (2 = x2 XP)
+	collected bool
+}
+
 type Arrow struct {
 	pos       Point
 	direction Direction
@@ -141,8 +150,10 @@ func NewGame() *Game {
 		moveDelay: 8,   // скорость движения змейки
 		enemyDelay: 12,  // скорость врагов (медленнее змейки)
 		bombDelay: 180,  // спавн бомбы каждые 180 тиков (~3 сек)
+		coinDelay: 300,  // спавн монетки каждые 300 тиков (~5 сек)
 		enemies:   []Enemy{},
 		bombs:     []Bomb{},
+		coins:     []Coin{},
 		arrows:    []Arrow{},
 		hasKey:    false,
 		arrowCount: 0,
@@ -305,6 +316,36 @@ func (g *Game) spawnKey() {
 	}
 }
 
+func (g *Game) spawnCoin() {
+	rand.Seed(time.Now().UnixNano())
+	for {
+		pos := Point{
+			X: rand.Intn(gridSizeX),
+			Y: rand.Intn(gridSizeY),
+		}
+		// Don't spawn too close to snake
+		tooClose := false
+		for _, segment := range g.snake {
+			dx := segment.X - pos.X
+			if dx < 0 {
+				dx = -dx
+			}
+			dy := segment.Y - pos.Y
+			if dy < 0 {
+				dy = -dy
+			}
+			if dx < 15 && dy < 10 {
+				tooClose = true
+				break
+			}
+		}
+		if !tooClose {
+			g.coins = append(g.coins, Coin{pos: pos, value: 2, collected: false})
+			break
+		}
+	}
+}
+
 func (g *Game) Update() error {
 	switch g.state {
 	case Menu:
@@ -441,6 +482,13 @@ func (g *Game) Update() error {
 		g.spawnBomb()
 	}
 
+	// Spawn coins periodically
+	g.coinTimer++
+	if g.coinTimer >= g.coinDelay {
+		g.coinTimer = 0
+		g.spawnCoin()
+	}
+
 	// Update bombs
 	g.updateBombs()
 
@@ -448,6 +496,21 @@ func (g *Game) Update() error {
 	if g.key != nil && newHead.X == g.key.pos.X && newHead.Y == g.key.pos.Y {
 		g.hasKey = true
 		g.key = nil
+	}
+
+	// Check coin collision
+	for i := range g.coins {
+		if !g.coins[i].collected && newHead.X == g.coins[i].pos.X && newHead.Y == g.coins[i].pos.Y {
+			g.coins[i].collected = true
+			// x2 XP bonus for next food collection
+			g.score += g.coins[i].value
+		}
+	}
+	// Remove collected coins
+	for i := len(g.coins) - 1; i >= 0; i-- {
+		if g.coins[i].collected {
+			g.coins = append(g.coins[:i], g.coins[i+1:]...)
+		}
 	}
 
 	// Check chest collision
@@ -767,6 +830,11 @@ func (g *Game) drawGame(screen *ebiten.Image) {
 		g.drawKey(screen, *g.key)
 	}
 
+	// Draw coins
+	for _, coin := range g.coins {
+		g.drawCoin(screen, coin)
+	}
+
 	// Draw arrows
 	for _, arrow := range g.arrows {
 		g.drawArrow(screen, arrow)
@@ -777,6 +845,10 @@ func (g *Game) drawGame(screen *ebiten.Image) {
 	ebitenutil.DebugPrintAt(screen, fmt.Sprintf("Arrows: %d", g.arrowCount), 10, 25)
 	if g.hasKey {
 		ebitenutil.DebugPrintAt(screen, "KEY!", 10, 40)
+	}
+	// Show coin bonus indicator
+	if len(g.coins) > 0 {
+		ebitenutil.DebugPrintAt(screen, "x2 XP COINS!", 10, 55)
 	}
 }
 
@@ -1065,6 +1137,44 @@ func (g *Game) drawFood(screen *ebiten.Image) {
 
 	// Leaf vein (lighter green line)
 	vector.StrokeLine(screen, leafBaseX+1, leafBaseY, leafTipX-1, leafTipY, 1, color.RGBA{100, 200, 100, 255}, false)
+}
+
+func (g *Game) drawCoin(screen *ebiten.Image, coin Coin) {
+	x := float32(coin.pos.X * tileSize)
+	y := float32(coin.pos.Y * tileSize)
+	size := float32(tileSize)
+
+	// Coin dimensions
+	coinRadius := size/2 - 4
+	centerX := x + size/2
+	centerY := y + size/2
+
+	// Outer gold ring
+	vector.DrawFilledCircle(screen, centerX, centerY, coinRadius, color.RGBA{255, 215, 0, 255}, false)
+
+	// Inner lighter gold (shine effect)
+	innerRadius := coinRadius - 3
+	vector.DrawFilledCircle(screen, centerX, centerY, innerRadius, color.RGBA{255, 235, 100, 255}, false)
+
+	// Dollar sign or "X2" indicator (golden center dot)
+	dotRadius := innerRadius / 2
+	vector.DrawFilledCircle(screen, centerX, centerY, dotRadius, color.RGBA{255, 200, 0, 255}, false)
+
+	// Sparkle effect (small white dots around)
+	sparkleOffset := coinRadius - 1
+	// Top sparkle
+	vector.DrawFilledCircle(screen, centerX, centerY-sparkleOffset, 1, color.RGBA{255, 255, 255, 255}, false)
+	// Bottom sparkle
+	vector.DrawFilledCircle(screen, centerX, centerY+sparkleOffset, 1, color.RGBA{255, 255, 255, 255}, false)
+	// Left sparkle
+	vector.DrawFilledCircle(screen, centerX-sparkleOffset, centerY, 1, color.RGBA{255, 255, 255, 255}, false)
+	// Right sparkle
+	vector.DrawFilledCircle(screen, centerX+sparkleOffset, centerY, 1, color.RGBA{255, 255, 255, 255}, false)
+
+	// Animated glow (pulsing effect)
+	glowPhase := (time.Now().UnixMilli() / 200) % 2
+	glowIntensity := uint8(100 + glowPhase*50)
+	vector.DrawFilledCircle(screen, centerX, centerY, coinRadius+2, color.RGBA{255, 215, 0, glowIntensity}, false)
 }
 
 func (g *Game) drawBomb(screen *ebiten.Image, bomb Bomb) {
