@@ -745,15 +745,7 @@ func (g *Game) drawGame(screen *ebiten.Image) {
 	}
 
 	// Draw food
-	vector.DrawFilledRect(
-		screen,
-		float32(g.food.X*tileSize),
-		float32(g.food.Y*tileSize),
-		tileSize,
-		tileSize,
-		color.RGBA{255, 0, 0, 255},
-		false,
-	)
+	g.drawFood(screen)
 
 	// Draw enemies (bugs with legs and antennae)
 	for _, enemy := range g.enemies {
@@ -1027,6 +1019,52 @@ func (g *Game) drawSnakeTongue(screen *ebiten.Image, head Point, direction Direc
 	// Draw fork prongs
 	vector.StrokeLine(screen, endX, endY, leftForkX, leftForkY, tongueWidth, tongueColor, false)
 	vector.StrokeLine(screen, endX, endY, rightForkX, rightForkY, tongueWidth, tongueColor, false)
+}
+
+func (g *Game) drawFood(screen *ebiten.Image) {
+	x := float32(g.food.X * tileSize)
+	y := float32(g.food.Y * tileSize)
+	size := float32(tileSize)
+
+	// Apple body (red circle)
+	centerX := x + size/2
+	centerY := y + size/2 + 2
+	radius := size/2 - 3
+
+	// Main red body
+	vector.DrawFilledCircle(screen, centerX, centerY, radius, color.RGBA{255, 0, 0, 255}, false)
+
+	// Shine/highlight on apple (lighter red)
+	highlightX := centerX - radius/3
+	highlightY := centerY - radius/3
+	vector.DrawFilledCircle(screen, highlightX, highlightY, radius/3, color.RGBA{255, 100, 100, 255}, false)
+
+	// Small indentation at top
+	vector.DrawFilledCircle(screen, centerX, centerY-radius+2, 2, color.RGBA{200, 0, 0, 255}, false)
+
+	// Brown stem
+	stemX := centerX
+	stemY := centerY - radius
+	vector.StrokeLine(screen, stemX, stemY, stemX, stemY-4, 2, color.RGBA{139, 69, 19, 255}, false)
+
+	// Green leaf
+	leafColor := color.RGBA{34, 139, 34, 255} // Forest green
+	leafBaseX := centerX + 1
+	leafBaseY := stemY - 2
+
+	// Draw leaf as a filled ellipse (using polygon approximation)
+	leafTipX := leafBaseX + 5
+	leafTipY := leafBaseY - 3
+	leafBottomX := leafBaseX + 2
+	leafBottomY := leafBaseY + 2
+
+	// Main leaf shape (triangle-like)
+	vector.DrawFilledRect(screen, leafBaseX, leafBaseY-1, 5, 2, leafColor, false)
+	vector.DrawFilledCircle(screen, leafTipX-1, leafTipY, 2, leafColor, false)
+	vector.DrawFilledCircle(screen, leafBottomX, leafBottomY, 2, leafColor, false)
+
+	// Leaf vein (lighter green line)
+	vector.StrokeLine(screen, leafBaseX+1, leafBaseY, leafTipX-1, leafTipY, 1, color.RGBA{100, 200, 100, 255}, false)
 }
 
 func (g *Game) drawBomb(screen *ebiten.Image, bomb Bomb) {
