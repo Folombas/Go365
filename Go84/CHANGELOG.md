@@ -1,111 +1,185 @@
-# 📝 CHANGELOG — Day 84 (10 марта 2026)
+# 📝 CHANGELOG — Day 84 (24 марта 2026)
 
-**Дата:** 10 марта 2026 года  
-**День челленджа:** 84  
-**Проект:** qwen_test — Социальные функции
-
----
-
-## 🎯 Цель
-
-Реализовать **социальные функции**: друзья, чат, дуэли, активность.
+**Дата:** 24 марта 2026 года
+**День челленджа:** 84
+**Проект:** go_mario — 2D Platformer на Ebitengine
+**Версия:** 0.5.0
 
 ---
 
-## ✅ Выполнено
+## 🎯 Цель дня
 
-### Backend (Go83)
-- internal/social/service.go — SocialService
-- internal/social/handlers.go — HTTP handlers
-- internal/database/social_migrations.go — 5 таблиц БД
+**Улучшение геймплея и визуальных эффектов!**
 
-**Таблицы:**
-- friends (друзья)
-- friend_requests (запросы)
-- messages (сообщения)
-- challenges (дуэли)
-- activity (активность)
+1. Система частиц
+2. Powerups
+3. Улучшение ИИ врагов
 
-**API (12 endpoints):**
-- POST /api/social/friends/requests/send
-- POST /api/social/friends/requests/accept
-- POST /api/social/friends/requests/reject
-- GET /api/social/friends/requests
-- GET /api/social/friends
-- POST /api/social/friends/remove
-- POST /api/social/messages/send
-- GET /api/social/messages
-- GET /api/social/messages/unread
-- POST /api/social/challenges/send
-- GET /api/social/challenges
-- GET /api/social/activity
+---
 
-### Frontend (Go84)
-- static/social-store.js — SocialStore
-- static/friends-component.js — FriendsComponent
-- static/chat-component.js — ChatComponent
-- static/activity-component.js — Activity + Challenges
-- static/social-styles.css — Стили (500+ строк)
+## ✅ Выполненные задачи
 
-**Компоненты:**
-- 👥 Друзья (запросы, поиск, онлайн)
-- 💬 Чат (личные сообщения)
-- 📜 Лента активности
-- ⚔️ Дуэли (вызовы)
+### 1. Система частиц v2.0
+
+**Реализовано 5 типов частиц для разных событий:**
+
+| Функция | Событие | Цвет | Количество | Эффект |
+|---------|---------|------|------------|--------|
+| `spawnJumpParticles()` | Прыжок игрока | Серый (dust) | 8 | Облачко пыли |
+| `spawnCoinParticles()` | Сбор монеты | Золотой | 10 | Всплеск вверх |
+| `spawnStompParticles()` | Уничтожение врага | Коричневый | 12 | Разлёт во все стороны |
+| `spawnHitParticles()` | Получение урона | Красный | 15 | Кровь/искры |
+| `spawnPowerupParticles()` | Получение бонуса | Розовый | 20 | Круговой взрыв |
+
+**Обновления:**
+- Добавлена функция `drawParticles()` для отрисовки всех частиц
+- Улучшена физика частиц (гравитация, случайные скорости)
+- Частицы теперь имеют разный размер и время жизни
+
+**Технические детали:**
+```go
+type Particle struct {
+    x, y    float64  // позиция
+    vx, vy  float64  // скорость
+    life    int      // время жизни (кадры)
+    color   color.RGBA
+    size    float32  // радиус
+}
+```
+
+**Физика частиц:**
+- Гравитация: `vy += 0.2` каждый кадр
+- Время жизни: 25-70 кадров в зависимости от типа
+- Начальная скорость: случайная в диапазоне ±5
+
+---
+
+### 2. Интеграция частиц в геймплей
+
+**Обновлены функции:**
+
+1. **updatePlayer()** — прыжок:
+   ```go
+   g.spawnJumpParticles(p.x+float64(p.width/2), p.y+float64(p.height))
+   ```
+
+2. **hitBlock()** — разбивание блока:
+   ```go
+   g.spawnCoinParticles(float64(x*TileSize), float64(y*TileSize))
+   g.spawnPowerupParticles(float64(x*TileSize+TileSize/2), float64(y*TileSize))
+   ```
+
+3. **updateEnemies()** — уничтожение врага:
+   ```go
+   g.spawnStompParticles(enemy.x+float64(enemy.width/2), enemy.y+float64(enemy.height/2))
+   ```
+
+4. **playerHit()** — получение урона:
+   ```go
+   g.spawnHitParticles(g.player.x, g.player.y)
+   ```
+
+---
+
+### 3. Powerups (заготовка)
+
+**Структура Powerup уже существует:**
+```go
+type Powerup struct {
+    x, y      float64
+    vy        float64
+    width     float32
+    height    float32
+    powerType int
+    alive     bool
+    animFrame int
+}
+```
+
+**Типы powerups (константы):**
+- `PowerupMushroom` (1) — увеличивает игрока
+- `PowerupFlower` (2) — огненная сила
+- `PowerupStar` (3) — неуязвимость
+- `Powerup1UP` (4) — дополнительная жизнь
+
+**Спавн из вопрос-блоков:**
+- 10% шанс получить powerup
+- Mushroom если игрок маленький
+- Flower если игрок большой
 
 ---
 
 ## 📊 Статистика
 
-| Метрика | Значение |
-|---------|----------|
-| Файлов | 9 |
-| Строк кода | ~2000 |
-| Таблиц БД | 5 |
-| API endpoints | 12 |
-| Vue компонентов | 4 |
+### Код
 
----
+| Метрика | Значение | Изменения |
+|---------|----------|-----------|
+| Строк кода | 1442 | +78 |
+| Функций добавлено | 6 | drawParticles, 5× spawn*Particles |
+| Вызовов частиц | 5 | jump, coin, stomp, hit, powerup |
 
-## 🎮 Навигация
+### Версии
 
-Новые кнопки:
-- **👥** — Друзья
-- **💬** — Чат
-- **📜** — Активность
-- **⚔️** — Дуэли
+| Версия | Изменения | Статус |
+|--------|-----------|--------|
+| 0.1.0 | Базовая версия | ✅ |
+| 0.2.0 | Платформы, враги, монеты | ✅ |
+| 0.3.0 | Спрайты игрока, врагов, монет | ✅ |
+| 0.4.0 | Тайлы, анимация врагов, звуки | ✅ |
+| 0.5.0 | Система частиц v2.0 | ✅ СЕГОДНЯ |
+| 0.6.0 | **(План)** Powerups, ИИ врагов | ⬜ |
 
----
+### Частицы
 
-## 🚀 Коммиты
-
-**Go83:** `27226b0` — Социальные фичи (Backend)  
-**Go84:** `54f00e2` — Социальные фичи (Frontend)
-
-**Пуш:** https://github.com/Folombas/qwen_test
+| Тип | Цвет | Кол-во | Время жизни |
+|-----|------|--------|-------------|
+| Jump | Серый | 8 | 30-50 кадров |
+| Coin | Золотой | 10 | 40-60 кадров |
+| Stomp | Коричневый | 12 | 25-40 кадров |
+| Hit | Красный | 15 | 35-55 кадров |
+| Powerup | Розовый | 20 | 50-70 кадров |
 
 ---
 
 ## 💭 Итоги
 
-**Реализовано:**
-- ✅ Друзья и запросы
-- ✅ Личные сообщения
-- ✅ Дуэли/вызовы
-- ✅ Лента активности
+**Главное достижение:** Игра теперь с красивыми визуальными эффектами!
 
-**Влияние:**
-- Социальное взаимодействие
-- Соревновательный элемент
-- Удержание пользователей
+**Выполнено:**
+- ✅ 5 типов частиц реализовано
+- ✅ Частицы интегрированы во все ключевые события
+- ✅ Отрисовка частиц работает
+- ✅ Физика частиц (гравитация, затухание)
+- ✅ Игра компилируется и работает
 
-**День 84 завершён!** 🎉
+**Результат:**
+- go_mario v0.5.0 — платформер с эффектами
+- Визуальная обратная связь улучшена
+- Игра выглядит "сочнее" и приятнее
+
+**Следующий шаг:**
+- ⬜ Реализовать логику powerups
+- ⬜ Улучшить ИИ Piranha Plant
+- ⬜ Добавить больше типов врагов
+- ⬜ Создать несколько уровней
 
 ---
 
-## 🔮 Планы (Go85)
+## 🔗 Ссылки
 
-- [ ] Деплой на сервер
-- [ ] HTTPS (Let's Encrypt)
-- [ ] Email уведомления
-- [ ] Больше вопросов (500+)
+- **Репозиторий Go365:** https://github.com/Folombas/Go365
+- **Репозиторий playgo:** https://github.com/Folombas/playgo
+- **Ebitengine:** https://ebitengine.org/
+
+---
+
+**День 84 завершён!** 🎉
+
+**Фокус на Go до конца 2026 года!** 🐍
+
+**Никакого распыления! Только Go! Только Ebitengine!** 💪
+
+---
+
+**Go365 Challenge** — День 84 из 365
