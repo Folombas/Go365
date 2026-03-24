@@ -63,7 +63,28 @@
 - **Время работы:** ~2 часов
 - **Строк кода написано:** ~1970
 - **Файлов создано:** 3 (main.go, README.md, go.mod)
-- **Коммитов сделано:** 1
+- **Коммитов сделано:** 2 (playgo + Go365)
+
+---
+
+## 🔗 Коммиты
+
+### playgo
+**Commit:** d36e4bc
+**Message:** Day 87: Add Jungle Crystal Adventure - new 2D platformer with crystal collection mechanics
+**Files:** 5 files changed, 2192 insertions(+)
+- jungle_crystal/main.go
+- jungle_crystal/README.md
+- jungle_crystal/go.mod
+- jungle_crystal/go.sum
+- jungle_crystal/jungle_crystal.exe
+
+### Go365
+**Commit:** 4180b87
+**Message:** Day 87: Add Jungle Crystal Adventure development log
+**Files:** 2 files changed, 187 insertions(+)
+- Go87/PLAN.md
+- Go87/CHANGELOG.md
 
 ---
 
