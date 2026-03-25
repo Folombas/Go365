@@ -172,6 +172,10 @@ easyGo/
 - [x] **Реализован Repository слой** ✅
 - [x] **Реализован Service слой** ✅
 - [x] **Полная аутентификация (Register/Login/Logout/Refresh)** ✅
+- [x] **CRUD постов (Create/Read/Update/Delete)** ✅
+- [x] **Валидация данных** ✅
+- [x] **Генерация slug (кириллица + латиница)** ✅
+- [x] **Пагинация и фильтрация** ✅
 
 **Структура blogAPI (Clean Architecture):**
 ```
@@ -189,9 +193,11 @@ blog-api/
 │   ├── model/                 # Модели данных
 │   ├── repository/            # Слой доступа к БД ✅ НОВОЕ!
 │   │   ├── user_repository.go # UserRepository
-│   │   └── token_repository.go # RefreshTokenRepository
+│   │   ├── token_repository.go # RefreshTokenRepository
+│   │   └── post_repository.go # PostRepository ✅
 │   └── service/               # Бизнес-логика ✅ НОВОЕ!
-│       └── auth_service.go    # AuthService (Register, Login, JWT)
+│       ├── auth_service.go    # AuthService (Register, Login, JWT)
+│       └── post_service.go    # PostService (CRUD, validation, slug) ✅
 ├── pkg/
 │   └── logger/                # Логгер
 ├── deployments/               # Docker
