@@ -130,6 +130,59 @@ focusgo/
 
 ---
 
+## 🔗 Коммиты
+
+### focusgo
+**Commit:** 78dd0cf
+**Message:** Day 88: Add Go Quiz feature - 50+ questions across 5 categories
+**Files:** 3 files changed, 1203 insertions(-), 11 deletions
+- internal/game/quiz.go (новый файл - 50+ вопросов)
+- cmd/focusgo/main.go (обновлены обработчики и меню)
+- focusgo (скомпилированный бинарник)
+
+**Новый функционал:**
+- ✅ Модуль Go-квизов (internal/game/quiz.go)
+- ✅ 50+ вопросов по 5 категориям
+- ✅ 3 уровня сложности
+- ✅ Система XP и рейтинга
+- ✅ Команда /quiz и inline-кнопки
+- ✅ Объяснения к каждому вопросу
+
+### Go365
+**Commit:** 46ffdf9
+**Message:** Day 88: Add focusgo Go Quiz development log
+**Files:** 2 files changed, 218 insertions
+- Go88/PLAN.md
+- Go88/CHANGELOG.md
+
+---
+
+## 🐛 Проблемы и решения
+
+### Проблема 1: Ошибка компиляции - неиспользуемая переменная
+**Ошибка:** `declared and not used: session`
+**Решение:** Удалена неиспользуемая переменная из функции handleQuizAnswer
+
+### Проблема 2: Обработка callback с индексом ответа
+**Задача:** Извлечь индекс ответа из callback_data (cb_quiz_answer_0, cb_quiz_answer_1, etc.)
+**Решение:** Добавлена проверка в default case switch с парсингом индекса
+
+### Проблема 3: Структура switch-case
+**Ошибка:** case после default недопустим
+**Решение:** Перемещён default в конец switch
+
+---
+
+## 🎯 Планы на завтра
+
+- Добавить больше вопросов (100+)
+- Реализовать систему статистики квизов
+- Добавить таблицу лидеров по квизам
+- Реализовать ежедневные квизы с бонусами
+- Добавить достижения за квизы
+
+---
+
 ## 🔗 Ресурсы
 
 - **Репозиторий Go365:** https://github.com/Folombas/Go365
