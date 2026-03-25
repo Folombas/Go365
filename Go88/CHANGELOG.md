@@ -155,41 +155,49 @@ easyGo/
 
 - [x] Создан репозиторий blogAPI
 - [x] Инициализирована структура проекта (Clean Architecture)
-- [x] Настроен go.mod с зависимостями
+- [x] Настроен go.mod с зависимостями (**pgx/v5** драйвер)
 - [x] Создан Makefile с командами
 - [x] Реализована конфигурация через .env
 - [x] Создан кастомный логгер
 - [x] Настроено подключение к **PostgreSQL** ✅
 - [x] Реализованы миграции БД (8 таблиц)
-- [x] Созданы модели данных (User, Post, Comment, Tag)
+- [x] Созданы модели данных (User, Post, Comment, Tag, RefreshToken)
 - [x] Реализованы middleware (Logger, CORS, JWT)
 - [x] Созданы handler (Auth, User, Post, Comment)
 - [x] Написан подробный README
 - [x] Проект компилируется без ошибок
 - [x] Добавлен Docker + docker-compose
-- [x] Сделан первый коммит
 - [x] **Миграция с SQLite на PostgreSQL** ✅
+- [x] **Переход с lib/pq на pgx/v5** ✅
+- [x] **Реализован Repository слой** ✅
+- [x] **Реализован Service слой** ✅
+- [x] **Полная аутентификация (Register/Login/Logout/Refresh)** ✅
 
-**Структура blogAPI:**
+**Структура blogAPI (Clean Architecture):**
 ```
 blog-api/
-├── cmd/api/main.go        # Точка входа
+├── cmd/api/main.go            # Точка входа, DI
 ├── internal/
-│   ├── config/            # Конфигурация
-│   ├── database/          # БД и миграции (PostgreSQL)
-│   ├── handler/           # HTTP обработчики
-│   ├── middleware/        # Middleware
-│   ├── model/             # Модели данных
-│   ├── repository/        # (будущий слой)
-│   └── service/           # (будущий слой)
+│   ├── config/                # Конфигурация
+│   ├── database/              # БД и миграции (PostgreSQL + pgx)
+│   ├── handler/               # HTTP обработчики (REST)
+│   │   ├── auth_handler.go    # Register, Login, Logout, Refresh
+│   │   ├── user_handler.go    # Profile CRUD
+│   │   ├── post_handler.go    # Posts CRUD
+│   │   └── comment_handler.go # Comments CRUD
+│   ├── middleware/            # Middleware (Logger, CORS, JWT)
+│   ├── model/                 # Модели данных
+│   ├── repository/            # Слой доступа к БД ✅ НОВОЕ!
+│   │   ├── user_repository.go # UserRepository
+│   │   └── token_repository.go # RefreshTokenRepository
+│   └── service/               # Бизнес-логика ✅ НОВОЕ!
+│       └── auth_service.go    # AuthService (Register, Login, JWT)
 ├── pkg/
-│   ├── logger/            # Логгер
-│   └── utils/             # Утилиты
-├── deployments/           # Docker, docker-compose
+│   └── logger/                # Логгер
+├── deployments/               # Docker
 │   ├── Dockerfile
 │   ├── docker-compose.yml
 │   └── init.sql
-├── migrations/            # SQL миграции
 ├── .env.example
 ├── Makefile
 └── README.md
