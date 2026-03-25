@@ -174,11 +174,14 @@ easyGo/
 - [x] **Полная аутентификация (Register/Login/Logout/Refresh)** ✅
 - [x] **CRUD постов (Create/Read/Update/Delete)** ✅
 - [x] **CRUD комментариев (Create/Read/Update/Delete)** ✅
+- [x] **CRUD тегов (Create/Read/Update/Delete)** ✅
+- [x] **Связь постов с тегами (Many-to-Many)** ✅
 - [x] **Система лайков для комментариев** ✅
 - [x] **Валидация данных** ✅
 - [x] **Генерация slug (кириллица + латиница)** ✅
 - [x] **Пагинация и фильтрация** ✅
 - [x] **Вложенные комментарии (replies)** ✅
+- [x] **Фильтрация постов по тегам** ✅
 
 **Структура blogAPI (Clean Architecture):**
 ```
@@ -198,11 +201,13 @@ blog-api/
 │   │   ├── user_repository.go # UserRepository
 │   │   ├── token_repository.go # RefreshTokenRepository
 │   │   ├── post_repository.go # PostRepository ✅
-│   │   └── comment_repository.go # CommentRepository ✅
+│   │   ├── comment_repository.go # CommentRepository ✅
+│   │   └── tag_repository.go # TagRepository ✅
 │   └── service/               # Бизнес-логика ✅ НОВОЕ!
 │       ├── auth_service.go    # AuthService (Register, Login, JWT)
 │       ├── post_service.go    # PostService (CRUD, validation, slug) ✅
-│       └── comment_service.go # CommentService (CRUD, Likes, replies) ✅
+│       ├── comment_service.go # CommentService (CRUD, Likes, replies) ✅
+│       └── tag_service.go     # TagService (CRUD, Post-Tag relations) ✅
 ├── pkg/
 │   └── logger/                # Логгер
 ├── deployments/               # Docker
