@@ -159,14 +159,16 @@ easyGo/
 - [x] Создан Makefile с командами
 - [x] Реализована конфигурация через .env
 - [x] Создан кастомный логгер
-- [x] Настроено подключение к SQLite
+- [x] Настроено подключение к **PostgreSQL** ✅
 - [x] Реализованы миграции БД (8 таблиц)
 - [x] Созданы модели данных (User, Post, Comment, Tag)
 - [x] Реализованы middleware (Logger, CORS, JWT)
 - [x] Созданы handler (Auth, User, Post, Comment)
 - [x] Написан подробный README
 - [x] Проект компилируется без ошибок
+- [x] Добавлен Docker + docker-compose
 - [x] Сделан первый коммит
+- [x] **Миграция с SQLite на PostgreSQL** ✅
 
 **Структура blogAPI:**
 ```
@@ -174,7 +176,7 @@ blog-api/
 ├── cmd/api/main.go        # Точка входа
 ├── internal/
 │   ├── config/            # Конфигурация
-│   ├── database/          # БД и миграции
+│   ├── database/          # БД и миграции (PostgreSQL)
 │   ├── handler/           # HTTP обработчики
 │   ├── middleware/        # Middleware
 │   ├── model/             # Модели данных
@@ -183,14 +185,17 @@ blog-api/
 ├── pkg/
 │   ├── logger/            # Логгер
 │   └── utils/             # Утилиты
+├── deployments/           # Docker, docker-compose
+│   ├── Dockerfile
+│   ├── docker-compose.yml
+│   └── init.sql
 ├── migrations/            # SQL миграции
-├── deployments/           # Docker, k8s
 ├── .env.example
 ├── Makefile
 └── README.md
 ```
 
-**Таблицы БД:**
+**Таблицы БД (PostgreSQL):**
 - users (пользователи)
 - posts (посты)
 - comments (комментарии)
@@ -199,6 +204,15 @@ blog-api/
 - post_likes (лайки постов)
 - comment_likes (лайки комментариев)
 - refresh_tokens (refresh токены)
+
+**Docker команды:**
+```bash
+make docker-up       # Запустить PostgreSQL + API
+make docker-up-db    # Запустить только PostgreSQL
+make docker-down     # Остановить всё
+make db-shell        # Подключиться к PostgreSQL
+make logs            # Просмотр логов
+```
 
 ---
 
