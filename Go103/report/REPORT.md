@@ -45,12 +45,16 @@
 - `math.Sin` — генерация звуковых волн
 - `map[*Tile]bool` — детекция совпадений
 
-### 📊 Коммиты:
-1. `0976beb` — Init project structure
-2. `7077c63` — Board unit tests
-3. `7f65d05` — Makefile
-4. `ed46f80` — Animation tests
-5. `7b131bb` — Sound tests + push
+### 📊 Коммиты (playgo repo):
+1. `47dc7217` — Init project structure
+2. `acb077c1` — Board unit tests
+3. `09f22766` — Makefile
+4. `23536c53` — Animation tests
+5. `3ead3dde` — Sound tests
+6. `2c85c0e0` — Build verification + WASM
+7. `76261a76` — Final test verification
+8. `fa875a2c` — Code quality review
+9. `d4329784` — Push to GitHub
 
 ### 🎓 Чему научился сегодня:
 1. **Ebitengine Game Interface** — полная реализация ebiten.Game (Update/Draw/Layout)
